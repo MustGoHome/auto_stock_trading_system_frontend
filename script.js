@@ -288,44 +288,6 @@ function updateCurrentTime() {
   document.getElementById('updateTime').textContent = updateTimeString;
 }
 
-// 시장 상태 업데이트
-function updateMarketStatus() {
-    const now = new Date();
-    const hour = now.getHours();
-    const minute = now.getMinutes();
-
-    const statusItems = document.querySelectorAll('.status-item');
-
-    statusItems.forEach(item => {
-        const text = item.querySelector('span:last-child').textContent;
-        const dot = item.querySelector('.status-dot');
-
-        if (!dot) return;
-
-        let isOpen = false;
-        if (text === '국내 정규장') {
-            // 9:00 ~ 15:30
-            const openTime = 9 * 60;
-            const closeTime = 15 * 60 + 30;
-            const currentTime = hour * 60 + minute;
-            isOpen = currentTime >= openTime && currentTime <= closeTime;
-        } else if (text === '해외 데이마켓') {
-            // 23:30 ~ 06:00
-            const openTime = 23 * 60 + 30;
-            const closeTime = 6 * 60;
-            const currentTime = hour * 60 + minute;
-            isOpen = currentTime >= openTime || currentTime <= closeTime;
-        }
-
-        dot.classList.remove('green', 'red');
-        if (isOpen) {
-            dot.classList.add('green');
-        } else {
-            dot.classList.add('red');
-        }
-    });
-}
-
 // 오늘 날짜 표시
 function updateTodayDate() {
   const now = new Date();
