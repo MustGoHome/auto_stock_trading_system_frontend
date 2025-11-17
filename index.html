@@ -1,155 +1,181 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Auto Stock Trading System Dashboard</title>
-    <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
-    </head>
-<body>
+    <link rel="stylesheet" href="styles.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
     <div class="dashboard-wrapper">
-        <!-- 상단 헤더 -->
-        <header class="main-header">
-            <div class="header-left">
-                <div class="logo">Auto Stock Trading System</div>
-                <nav class="main-nav">
-                    <a href="#" class="nav-item active">홈</a>
-                    <a href="#" class="nav-item">전략</a>
-                    <a href="#" class="nav-item">투자현황</a>
-                    <a href="#" class="nav-item">설정</a>
-                </nav>
-            </div>
-            <div class="header-right">
-                <div class="header-time" id="currentTime"></div>
-            </div>
-        </header>
-
-        <div class="main-content">
-            <!-- 좌측 메인 영역 -->
-            <div class="main-area">
-                <!-- 시장 개요 섹션 -->
-                <section class="market-overview">
-                    <div class="market-status">
-                        <div class="status-item">
-                            <span class="status-dot green"></span>
-                            <span>국내 시장</span>
-                        </div>
-                        <div class="status-item">
-                            <span class="status-dot green"></span>
-                            <span>해외 시장</span>
-                        </div>
-                        <div class="market-calendar">
-                            <span class="calendar-date" id="todayDate"></span>
-                            <span class="calendar-event">증시캘린더</span>
-                        </div>
-                    </div>
-                    <div class="market-indices" id="marketIndices">
-                        <!-- 동적으로 생성됨 -->
-                    </div>
-                </section>
-
-                <!-- 탭 네비게이션 -->
-                <section class="content-tabs">
-                    <div class="tab-nav">
-                        <button class="tab-btn active" data-tab="realtime">실시간 차트</button>
-                        <button class="tab-btn" data-tab="strategy">전략 현황</button>
-                        <button class="strategy-order-btn" id="strategyOrderBtn">전략 주문</button>
-                    </div>
-                </section>
-
-                <!-- 전략 주문 폼 -->
-                <section class="order-form-container" id="orderFormContainer">
-                    <div class="order-form">
-                        <div class="order-form-header">
-                            <h3>전략 주문</h3>
-                            <button class="order-form-close" id="orderFormClose">✕</button>
-                        </div>
-                        <div class="order-form-body">
-                            <div class="form-group">
-                                <label for="orderValue">입력 값</label>
-                                <input type="text" id="orderValue" placeholder="종목명 또는 종목코드 입력" class="form-input">
-                            </div>
-                            <div class="form-group">
-                                <label for="orderQuantity">수량</label>
-                                <input type="number" id="orderQuantity" placeholder="수량 입력" class="form-input" min="1">
-                            </div>
-                            <div class="form-group">
-                                <label for="orderStrategy">투자 전략</label>
-                                <select id="orderStrategy" class="form-select">
-                                    <option value="RSI">RSI</option>
-                                    <option value="MACD">MACD</option>
-                                    <option value="볼린저밴드">볼린저밴드</option>
-                                    <option value="이동평균">이동평균</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>위험도</label>
-                                <div class="risk-level-group">
-                                    <button class="risk-level-btn" data-risk="low">하</button>
-                                    <button class="risk-level-btn" data-risk="medium">중</button>
-                                    <button class="risk-level-btn" data-risk="high">상</button>
-                                </div>
-                            </div>
-                            <button class="order-submit-btn" id="orderSubmitBtn">주문 실행</button>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- 실시간 차트 탭 -->
-                <section class="tab-content active" id="realtimeTab">
-                    <div class="filter-tabs">
-                        <button class="filter-btn active" data-filter="domestic">국내</button>
-                    </div>
-                    <div class="stocks-table-wrapper">
-                        <div class="table-header">
-                            <span class="update-time">순위 <span id="updateTime">오늘 14:03</span> 기준</span>
-                        </div>
-                        <table class="stocks-table">
-                            <thead>
-                                <tr>
-                                    <th class="col-rank">순위</th>
-                                    <th class="col-name">종목명</th>
-                                    <th class="col-price">현재가</th>
-                                    <th class="col-change">등락률</th>
-                                    <th class="col-volume">거래대금</th>
-                                </tr>
-                            </thead>
-                            <tbody id="stocksTableBody">
-                                <!-- 동적으로 생성됨 -->
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
-
-                <!-- 전략 현황 탭 -->
-                <section class="tab-content" id="strategyTab">
-                    <div class="strategy-table-wrapper">
-                        <div class="table-header">
-                            <span class="update-time">전략 거래 현황</span>
-                        </div>
-                        <table class="strategy-table">
-                            <thead>
-                                <tr>
-                                    <th class="col-strategy-name">종목명</th>
-                                    <th class="col-buy-price">매수가</th>
-                                    <th class="col-sell-price">매도가</th>
-                                    <th class="col-strategy-type">투자 전략</th>
-                                    <th class="col-gap">갭(%)</th>
-                                    <th class="col-status">진행 상황</th>
-                                </tr>
-                            </thead>
-                            <tbody id="strategyTableBody">
-                                <!-- 동적으로 생성됨 -->
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
-            </div>
+      <!-- 상단 헤더 -->
+      <header class="main-header">
+        <div class="header-left">
+          <div class="logo">Auto Stock Trading System</div>
+          <nav class="main-nav">
+            <a href="#" class="nav-item active">홈</a>
+            <a href="#" class="nav-item">전략</a>
+            <a href="#" class="nav-item">투자현황</a>
+            <a href="#" class="nav-item">설정</a>
+          </nav>
         </div>
+        <div class="header-right">
+          <div class="header-time" id="currentTime"></div>
+        </div>
+      </header>
+
+      <div class="main-content">
+        <!-- 좌측 메인 영역 -->
+        <div class="main-area">
+          <!-- 시장 개요 섹션 -->
+          <section class="market-overview">
+            <div class="market-status">
+              <div class="status-item" id="domestic">
+                <span class="status-dot green"></span>
+                <span>국내 시장</span>
+              </div>
+              <div class="status-item" id="foreign">
+                <span class="status-dot green"></span>
+                <span>해외 시장</span>
+              </div>
+              <div class="market-calendar">
+                <span class="calendar-date" id="todayDate"></span>
+                <span class="calendar-event">증시캘린더</span>
+              </div>
+            </div>
+            <div class="market-indices" id="marketIndices">
+              <!-- 동적으로 생성됨 -->
+            </div>
+          </section>
+
+          <!-- 탭 네비게이션 -->
+          <section class="content-tabs">
+            <div class="tab-nav">
+              <button class="tab-btn active" data-tab="realtime">
+                실시간 차트
+              </button>
+              <button class="tab-btn" data-tab="strategy">전략 현황</button>
+              <button class="strategy-order-btn" id="strategyOrderBtn">
+                전략 주문
+              </button>
+            </div>
+          </section>
+
+          <!-- 전략 주문 폼 -->
+          <section class="order-form-container" id="orderFormContainer">
+            <div class="order-form">
+              <div class="order-form-header">
+                <h3>전략 주문</h3>
+                <button class="order-form-close" id="orderFormClose">✕</button>
+              </div>
+              <div class="order-form-body">
+                <div class="form-group">
+                  <label for="orderValue">입력 값</label>
+                  <input
+                    type="text"
+                    id="orderValue"
+                    placeholder="종목명 또는 종목코드 입력"
+                    class="form-input"
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="orderQuantity">수량</label>
+                  <input
+                    type="number"
+                    id="orderQuantity"
+                    placeholder="수량 입력"
+                    class="form-input"
+                    min="1"
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="orderStrategy">투자 전략</label>
+                  <select id="orderStrategy" class="form-select">
+                    <option value="RSI">RSI</option>
+                    <option value="MACD">MACD</option>
+                    <option value="볼린저밴드">볼린저밴드</option>
+                    <option value="이동평균">이동평균</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>위험도</label>
+                  <div class="risk-level-group">
+                    <button class="risk-level-btn" data-risk="low">하</button>
+                    <button class="risk-level-btn" data-risk="medium">
+                      중
+                    </button>
+                    <button class="risk-level-btn" data-risk="high">상</button>
+                  </div>
+                </div>
+                <button class="order-submit-btn" id="orderSubmitBtn">
+                  주문 실행
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <!-- 실시간 차트 탭 -->
+          <section class="tab-content active" id="realtimeTab">
+            <div class="filter-tabs">
+              <button class="filter-btn active" data-filter="domestic">
+                국내
+              </button>
+            </div>
+            <div class="stocks-table-wrapper">
+              <div class="table-header">
+                <span class="update-time"
+                  >순위 <span id="updateTime">오늘 14:03</span> 기준</span
+                >
+              </div>
+              <table class="stocks-table">
+                <thead>
+                  <tr>
+                    <th class="col-rank">순위</th>
+                    <th class="col-name">종목명</th>
+                    <th class="col-price">현재가</th>
+                    <th class="col-change">등락률</th>
+                    <th class="col-volume">거래대금</th>
+                  </tr>
+                </thead>
+                <tbody id="stocksTableBody">
+                  <!-- 동적으로 생성됨 -->
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- 전략 현황 탭 -->
+          <section class="tab-content" id="strategyTab">
+            <div class="strategy-table-wrapper">
+              <div class="table-header">
+                <span class="update-time">전략 거래 현황</span>
+              </div>
+              <table class="strategy-table">
+                <thead>
+                  <tr>
+                    <th class="col-strategy-name">종목명</th>
+                    <th class="col-buy-price">매수가</th>
+                    <th class="col-sell-price">매도가</th>
+                    <th class="col-strategy-type">투자 전략</th>
+                    <th class="col-gap">갭(%)</th>
+                    <th class="col-status">진행 상황</th>
+                  </tr>
+                </thead>
+                <tbody id="strategyTableBody">
+                  <!-- 동적으로 생성됨 -->
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </div>
     </div>
 
-    <script src="script.js"></script>
-    <script src="marketStatus.js"></script>
-</body>
+    <script src="javascript/script.js"></script>
+    <script src="javascript/marketStatus.js"></script>
+  </body>
 </html>
