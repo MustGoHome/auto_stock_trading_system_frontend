@@ -3,14 +3,14 @@
 * 시장 상태 업데이트 함수 *
 *************************
 [ 국내 시장 ]
-- 장외 시간 : 08:30 ~ 08:39, 15:30 ~ 17:59 -> Yellow Color Dot
-- 동시 호가 접수 : 08:40 ~ 08:59 -> Yellow Color Dot
-- 정규 시간 : 09:00 ~ 15:29 -> Green Color Dot
+ - 장외 시간 : 08:30 ~ 08:39, 15:30 ~ 17:59 -> Yellow Color Dot
+ - 동시 호가 접수 : 08:40 ~ 08:59 -> Yellow Color Dot
+ - 정규 시간 : 09:00 ~ 15:29 -> Green Color Dot
 
 [ 해외 시장 ]
-- 프리 마켓 : 18:00 ~ 23:29 -> Yellow Color Dot
-- 정규장 : 23:30 ~ 05:59 -> Green Color Dot
-- 애프터 마켓 : 06:00 ~ 09:59 -> Yellow Color Dot
+ - 프리 마켓 : 18:00 ~ 23:29 -> Yellow Color Dot
+ - 정규장 : 23:30 ~ 05:59 -> Green Color Dot
+ - 애프터 마켓 : 06:00 ~ 09:59 -> Yellow Color Dot
 */
 
 function updateMarketStatus() {

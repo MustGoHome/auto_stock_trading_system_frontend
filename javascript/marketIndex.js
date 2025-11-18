@@ -54,6 +54,7 @@ const zero = [
     },
 ]
 
+// Django API 호출
 async function fetchMarketIndex() {
   try {
     // const response = await fetch('http://localhost:8000/api/market/indices/');
@@ -76,7 +77,7 @@ async function fetchMarketIndex() {
             responseJSON.push({
                 name: item.name,
                 change: change,
-                changePercent: ((change / item.yesterday) * 100).toFixed(1),
+                changePercent: ((change / item.yesterday) * 100).toFixed(2),
                 today: item.today
             })
         }
@@ -89,4 +90,26 @@ async function fetchMarketIndex() {
   }
 }
 
-console.log(fetchMarketIndex())
+// 시장 지수 업데이트
+async function updateMarketIndices() {
+    const marketIndexData = await fetchMarketIndex();
+    const indexItemArray = document.getElementsByClassName('index-item');
+    console.log(indexItemArray)
+    
+
+    for(let i=0; i<indexItemArray.length; i++){
+        const indexValue = indexItemArray[i].querySelector('.index-value');
+        const indexChange = indexItemArray[i].querySelector('.index-change');
+        const indexPositive = marketIndexData[i].isPositive ? 'positive' : 'negative';
+        const indexSymbol = marketIndexData[i].isPositive ? '+' : '-';
+
+        indexValue.textContent = marketIndexData[i].today;
+        indexChange.textContent = marketIndexData[i].change;
+
+        indexChange.className = `index-change ${indexPositive}`;
+        indexChange.innerHTML = `
+            <span>${indexSymbol}${indexItemArray[i].change}</sapn>
+            <span>${indexSymbol}${indexItemArray[i].changePercent}</sapn>
+        `
+    }
+}

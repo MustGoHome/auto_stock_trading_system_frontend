@@ -48,8 +48,53 @@
               </div>
             </div>
             <div class="market-indices" id="marketIndices">
-              <!-- 동적으로 생성됨 -->
-            </div>
+              <!-- 달러 환율 -->
+              <div class="index-item" id="index-달러-환율">
+                <div class="index-label">달러 환율</div>
+                <div class="index-value-container">
+                  <div class="index-value">0</div>
+                </div>
+                <div class="index-change">
+                  <span>0</span>
+                  <span>(0%)</span>
+                </div>
+              </div>
+
+              <!-- 코스피 -->
+              <div class="index-item" id="index-코스피">
+                <div class="index-label">코스피</div>
+                <div class="index-value-container">
+                  <div class="index-value">0</div>
+                </div>
+                <div class="index-change">
+                  <span>0</span>
+                  <span>(0%)</span>
+                </div>
+              </div>
+
+              <!-- 코스닥 -->
+              <div class="index-item" id="index-코스닥">
+                <div class="index-label">코스닥</div>
+                <div class="index-value-container">
+                  <div class="index-value">0</div>
+                </div>
+                <div class="index-change">
+                  <span>0</span>
+                  <span>(0%)</span>
+                </div>
+              </div>
+
+              <!-- 나스닥 -->
+              <div class="index-item" id="index-나스닥">
+                <div class="index-label">나스닥</div>
+                <div class="index-value-container">
+                  <div class="index-value">0</div>
+                </div>
+                <div class="index-change">
+                  <span>0</span>
+                  <span>(0%)</span>
+                </div>
+              </div>
           </section>
 
           <!-- 탭 네비게이션 -->
@@ -175,7 +220,10 @@
       </div>
     </div>
 
-    <script src="javascript/script.js"></script>
-    <script src="javascript/marketStatus.js"></script>
+    
+    <script src="./javascript/today.js"></script>
+    <script src="./javascript/marketStatus.js"></script>
+    <script src="./javascript/marketIndex.js"></script>
+    <script src="./javascript/script.js"></script>
   </body>
 </html>

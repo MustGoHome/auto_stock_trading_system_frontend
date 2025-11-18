@@ -1,84 +1,3 @@
-// API 호출
-async function fetchMarketIndices() {
-  try {
-    const response = await fetch('http://localhost:8000/api/market/indices/');
-    console.log('API Response:', response);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const apiData = await response.json();
-    console.log('API Data:', apiData);
-
-    return apiData.indices.map((index) => {
-      const cleanedName = index.name.replace('(ETF 추정)', '').trim();
-      if (index.data.length < 2) {
-        return {
-          name: cleanedName,
-          value: index.data.length > 0 ? index.data[0].value : 0,
-          change: 0,
-          changePercent: 0,
-          isPositive: true,
-          data: index.data.map((d) => d.value),
-        };
-      }
-      const todayData = index.data[index.data.length - 1];
-      const yesterdayData = index.data[index.data.length - 2];
-
-      const value = todayData.value;
-      const change = todayData.value - yesterdayData.value;
-      const changePercent = (change / yesterdayData.value) * 100;
-      const isPositive = change >= 0;
-      const chartData = index.data.map((d) => d.value);
-
-      return {
-        name: cleanedName,
-        value: value,
-        change: change,
-        changePercent: changePercent,
-        isPositive: isPositive,
-        data: chartData,
-      };
-    });
-  } catch (error) {
-    console.error('Failed to fetch or process market indices:', error);
-    // API 호출 실패 시, 빈 배열을 반환하여 에러를 방지합니다.
-    return [
-      {
-        name: '달러 환율',
-        value: 0,
-        change: 0,
-        changePercent: 0,
-        isPositive: true,
-        data: [],
-      },
-      {
-        name: '코스피',
-        value: 0,
-        change: 0,
-        changePercent: 0,
-        isPositive: true,
-        data: [],
-      },
-      {
-        name: '코스닥',
-        value: 0,
-        change: 0,
-        changePercent: 0,
-        isPositive: true,
-        data: [],
-      },
-      {
-        name: '나스닥',
-        value: 0,
-        change: 0,
-        changePercent: 0,
-        isPositive: true,
-        data: [],
-      },
-    ];
-  }
-}
-
 // 정적 데이터
 
 const stocksTableData = [
@@ -90,7 +9,6 @@ const stocksTableData = [
     change: -3.28,
     isPositive: false,
     volume: '135억',
-    data: generateMiniChartData(20, false),
   },
   {
     rank: 2,
@@ -100,7 +18,6 @@ const stocksTableData = [
     change: -2.11,
     isPositive: false,
     volume: '70억',
-    data: generateMiniChartData(20, false),
   },
   {
     rank: 3,
@@ -110,7 +27,6 @@ const stocksTableData = [
     change: 3.12,
     isPositive: true,
     volume: '58억',
-    data: generateMiniChartData(20, true),
   },
   {
     rank: 4,
@@ -120,7 +36,6 @@ const stocksTableData = [
     change: -0.85,
     isPositive: false,
     volume: '45억',
-    data: generateMiniChartData(20, false),
   },
   {
     rank: 5,
@@ -130,7 +45,6 @@ const stocksTableData = [
     change: 1.85,
     isPositive: true,
     volume: '42억',
-    data: generateMiniChartData(20, true),
   },
   {
     rank: 6,
@@ -140,7 +54,6 @@ const stocksTableData = [
     change: -2.97,
     isPositive: false,
     volume: '38억',
-    data: generateMiniChartData(20, false),
   },
   {
     rank: 7,
@@ -150,7 +63,6 @@ const stocksTableData = [
     change: 2.15,
     isPositive: true,
     volume: '35억',
-    data: generateMiniChartData(20, true),
   },
   {
     rank: 8,
@@ -160,7 +72,6 @@ const stocksTableData = [
     change: -1.25,
     isPositive: false,
     volume: '32억',
-    data: generateMiniChartData(20, false),
   },
   {
     rank: 9,
@@ -170,7 +81,6 @@ const stocksTableData = [
     change: 0.92,
     isPositive: true,
     volume: '28억',
-    data: generateMiniChartData(20, true),
   },
   {
     rank: 10,
@@ -180,7 +90,6 @@ const stocksTableData = [
     change: -1.45,
     isPositive: false,
     volume: '25억',
-    data: generateMiniChartData(20, false),
   },
 ];
 
@@ -191,7 +100,6 @@ const popularStocksData = [
     price: 71500,
     change: 2.35,
     isPositive: true,
-    data: generateChartData(20, 70000, 72000),
   },
   {
     name: 'SK하이닉스',
@@ -199,7 +107,6 @@ const popularStocksData = [
     price: 142500,
     change: -1.25,
     isPositive: false,
-    data: generateChartData(20, 140000, 145000),
   },
   {
     name: 'NAVER',
@@ -207,7 +114,6 @@ const popularStocksData = [
     price: 198500,
     change: 3.12,
     isPositive: true,
-    data: generateChartData(20, 195000, 200000),
   },
   {
     name: '카카오',
@@ -215,7 +121,6 @@ const popularStocksData = [
     price: 52300,
     change: -0.85,
     isPositive: false,
-    data: generateChartData(20, 51000, 53000),
   },
   {
     name: 'LG에너지솔루션',
@@ -223,7 +128,6 @@ const popularStocksData = [
     price: 425000,
     change: 1.85,
     isPositive: true,
-    data: generateChartData(20, 420000, 430000),
   },
   {
     name: '현대차',
@@ -231,150 +135,35 @@ const popularStocksData = [
     price: 245000,
     change: 0.92,
     isPositive: true,
-    data: generateChartData(20, 240000, 250000),
   },
 ];
 
 let currentFilter = 'all';
 let currentTab = 'realtime';
 
-// 차트 데이터 생성 함수
-function generateChartData(count, min, max) {
-  const data = [];
-  const baseValue = (min + max) / 2;
-  const volatility = (max - min) / 4;
-
-  for (let i = 0; i < count; i++) {
-    const randomChange = (Math.random() - 0.5) * 2 * volatility;
-    const value = baseValue + randomChange;
-    data.push(Math.max(min, Math.min(max, value)));
-  }
-
-  return data;
-}
-
-// 미니 차트 데이터 생성
-function generateMiniChartData(count, isPositive) {
-  const data = [];
-  const baseValue = 50;
-  const volatility = 15;
-
-  for (let i = 0; i < count; i++) {
-    const trend = isPositive ? 1 : -1;
-    const randomChange = (Math.random() - 0.5) * volatility * trend;
-    const value = baseValue + i * 0.5 * trend + randomChange;
-    data.push(Math.max(20, Math.min(80, value)));
-  }
-
-  return data;
-}
-
-// 현재 시간 업데이트
-function updateCurrentTime() {
-  const now = new Date();
-  const timeString = now.toLocaleString('ko-KR', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-  document.getElementById('currentTime').textContent = timeString;
-
-  // 업데이트 시간도 함께 업데이트
-  const updateTimeString = `오늘 ${now.getHours()}:${String(
-    now.getMinutes()
-  ).padStart(2, '0')}`;
-  document.getElementById('updateTime').textContent = updateTimeString;
-}
-
-// 오늘 날짜 표시
-function updateTodayDate() {
-  const now = new Date();
-  const dateString = now.toLocaleDateString('ko-KR', {
-    month: 'long',
-    day: 'numeric',
-  });
-  document.getElementById('todayDate').textContent = dateString;
-}
-
-// 시장 지수 렌더링
-function renderMarketIndices(marketIndicesData) {
-  const container = document.getElementById('marketIndices');
-  container.innerHTML = '';
-
-  marketIndicesData.forEach((index) => {
-    const item = document.createElement('div');
-    item.className = 'index-item';
-    item.id = `index-${index.name.replace(/\s+/g, '-')}`;
-
-    const changeClass = index.isPositive ? 'positive' : 'negative';
-    const changeSymbol = index.isPositive ? '+' : '';
-
-    item.innerHTML = `
-            <div class="index-label">${index.name}</div>
-            <div class="index-value-container">
-                <div class="index-value">${index.value.toLocaleString()}</div>
-            </div>
-            <div class="index-change ${changeClass}">
-                <span>${changeSymbol}${index.change.toLocaleString()}</span>
-                <span>(${changeSymbol}${Math.abs(index.changePercent).toFixed(
-      2
-    )}%)</span>
-            </div>
-        `;
-
-    container.appendChild(item);
-  });
-}
-
 // 값 업데이트 애니메이션
-function updateIndexValue(element, newValue, oldValue) {
-    if (newValue === oldValue) return;
+// function updateIndexValue(element, newValue, oldValue) {
+//     if (newValue === oldValue) return;
 
-    const valueSpan = element.querySelector('.index-value');
-    if (!valueSpan) return;
+//     const valueSpan = element.querySelector('.index-value');
+//     if (!valueSpan) return;
 
-    const isPositive = newValue > oldValue;
-    const animationClass = isPositive ? 'value-up' : 'value-down';
+//     const isPositive = newValue > oldValue;
+//     const animationClass = isPositive ? 'value-up' : 'value-down';
 
-    const newSpan = document.createElement('span');
-    newSpan.className = `index-value ${animationClass}`;
-    newSpan.textContent = newValue.toLocaleString();
+//     const newSpan = document.createElement('span');
+//     newSpan.className = `index-value ${animationClass}`;
+//     newSpan.textContent = newValue.toLocaleString();
     
-    valueSpan.parentNode.appendChild(newSpan);
-    valueSpan.classList.add(isPositive ? 'value-out-up' : 'value-out-down');
+//     valueSpan.parentNode.appendChild(newSpan);
+//     valueSpan.classList.add(isPositive ? 'value-out-up' : 'value-out-down');
 
-    setTimeout(() => {
-        if (valueSpan.parentNode) {
-            valueSpan.parentNode.removeChild(valueSpan);
-        }
-    }, 300);
-}
-
-// 시장 지수 업데이트
-async function updateMarketIndices() {
-    const marketIndicesData = await fetchMarketIndices();
-    
-    marketIndicesData.forEach(index => {
-        const item = document.getElementById(`index-${index.name.replace(/\s+/g, '-')}`);
-        if (item) {
-            const oldValueElement = item.querySelector('.index-value');
-            const oldValue = parseFloat(oldValueElement.textContent.replace(/,/g, ''));
-            
-            updateIndexValue(item, index.value, oldValue);
-
-            const changeElement = item.querySelector('.index-change');
-            const changeClass = index.isPositive ? 'positive' : 'negative';
-            const changeSymbol = index.isPositive ? '+' : '';
-            changeElement.className = `index-change ${changeClass}`;
-            changeElement.innerHTML = `
-                <span>${changeSymbol}${index.change.toLocaleString()}</span>
-                <span>(${changeSymbol}${Math.abs(index.changePercent).toFixed(2)}%)</span>
-            `;
-        }
-    });
-}
+//     setTimeout(() => {
+//         if (valueSpan.parentNode) {
+//             valueSpan.parentNode.removeChild(valueSpan);
+//         }
+//     }, 300);
+// }
 
 // 미니 차트 그리기
 function drawMiniChart(canvas, data, isPositive) {
@@ -534,23 +323,6 @@ function drawStockChart(canvas, data, isPositive) {
   gradient.addColorStop(0, color1);
   gradient.addColorStop(1, color2);
 
-  // 차트 영역
-  ctx.beginPath();
-  ctx.moveTo(padding, padding);
-
-  data.forEach((value, index) => {
-    const x = padding + (index / (data.length - 1)) * chartWidth;
-    const y =
-      padding + chartHeight - ((value - minValue) / range) * chartHeight;
-    ctx.lineTo(x, y);
-  });
-
-  ctx.lineTo(padding + chartWidth, height - padding);
-  ctx.lineTo(padding, height - padding);
-  ctx.closePath();
-  ctx.fillStyle = gradient;
-  ctx.fill();
-
   // 라인
   ctx.beginPath();
   ctx.strokeStyle = isPositive ? '#ef4444' : '#3b82f6';
@@ -560,72 +332,6 @@ function drawStockChart(canvas, data, isPositive) {
     const x = padding + (index / (data.length - 1)) * chartWidth;
     const y =
       padding + chartHeight - ((value - minValue) / range) * chartHeight;
-
-    if (index === 0) {
-      ctx.moveTo(x, y);
-    } else {
-      ctx.lineTo(x, y);
-    }
-  });
-
-  ctx.stroke();
-}
-
-// 사이드바 차트 그리기
-function drawSidebarChart() {
-  const canvas = document.getElementById('sidebarChart');
-  const ctx = canvas.getContext('2d');
-  const width = canvas.width;
-  const height = canvas.height;
-
-  ctx.clearRect(0, 0, width, height);
-
-  // 선 차트 데이터 생성
-  const lineData = [];
-  const basePrice = 573500;
-  for (let i = 0; i < 30; i++) {
-    const change = (Math.random() - 0.55) * 8000; // 약간 하락 추세
-    const price = basePrice + change - i * 100;
-    lineData.push(price);
-  }
-
-  const minPrice = Math.min(...lineData);
-  const maxPrice = Math.max(...lineData);
-  const priceRange = maxPrice - minPrice || 1;
-
-  const padding = 10;
-  const chartWidth = width - padding * 2;
-  const chartHeight = height - padding * 2;
-
-  // 그라데이션 배경
-  const gradient = ctx.createLinearGradient(0, padding, 0, height - padding);
-  gradient.addColorStop(0, 'rgba(59, 130, 246, 0.1)');
-  gradient.addColorStop(1, 'rgba(59, 130, 246, 0.02)');
-
-  // 차트 영역 채우기
-  ctx.beginPath();
-  ctx.moveTo(padding, height - padding);
-
-  lineData.forEach((price, index) => {
-    const x = padding + (index / (lineData.length - 1)) * chartWidth;
-    const y = padding + chartHeight - ((price - minPrice) / priceRange) * chartHeight;
-    ctx.lineTo(x, y);
-  });
-
-  ctx.lineTo(padding + chartWidth, height - padding);
-  ctx.lineTo(padding, height - padding);
-  ctx.closePath();
-  ctx.fillStyle = gradient;
-  ctx.fill();
-
-  // 선 그리기
-  ctx.beginPath();
-  ctx.strokeStyle = '#3b82f6';
-  ctx.lineWidth = 2;
-
-  lineData.forEach((price, index) => {
-    const x = padding + (index / (lineData.length - 1)) * chartWidth;
-    const y = padding + chartHeight - ((price - minPrice) / priceRange) * chartHeight;
 
     if (index === 0) {
       ctx.moveTo(x, y);
@@ -792,8 +498,7 @@ async function init() {
   setInterval(updateCurrentTime, 60000); // 1분마다 업데이트
   setInterval(updateMarketStatus, 60000); // 1분마다 시장 상태 업데이트
 
-  const marketIndicesData = await fetchMarketIndices();
-  renderMarketIndices(marketIndicesData);
+  const marketIndicesData = await fetchMarketIndex();
   setInterval(updateMarketIndices, 10000); // 10초마다 시장 지수 업데이트
 
   renderStocksTable();
@@ -897,14 +602,3 @@ function initOrderForm() {
 // 페이지 로드 시 초기화
 window.addEventListener('DOMContentLoaded', init);
 
-// 리사이즈 시 차트 재그리기
-window.addEventListener('resize', async () => {
-  setTimeout(async () => {
-    const marketIndicesData = await fetchMarketIndices();
-    renderMarketIndices(marketIndicesData);
-    renderStocksTable();
-    renderStrategyTable();
-    // renderPopularStocks();
-    // drawSidebarChart();
-  }, 100);
-});
