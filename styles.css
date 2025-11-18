@@ -15,7 +15,7 @@ body {
 }
 
 .dashboard-wrapper {
-  max-width: 1440px;
+  max-width: 1000px;
   margin: 0 auto;
   background-color: #ffffff;
   min-height: 100vh;
@@ -23,7 +23,7 @@ body {
 
 /* 헤더 */
 .main-header {
-  background-color: #ffffff;
+  background-color: #f8f9fa;
   border-bottom: 1px solid #e8e8e8;
   padding: 16px 24px;
   display: flex;
@@ -377,29 +377,65 @@ body {
   display: block;
 }
 
-/* 전략 주문 폼 */
+/* 전략 주문 폼 - 모달 */
 .order-form-container {
   display: none;
-  background-color: #ffffff;
-  border-radius: 12px;
-  padding: 24px;
-  margin-bottom: 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  animation: slideDown 0.3s ease-out;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
 }
 
 .order-form-container.active {
-  display: block;
+  display: flex;
 }
 
-@keyframes slideDown {
+.order-form-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.order-form {
+  position: relative;
+  background-color: #ffffff;
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-width: 600px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  z-index: 1001;
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(-10px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+  }
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 
@@ -600,10 +636,12 @@ body {
 .stocks-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
 .stocks-table thead {
   border-bottom: 1px solid #f0f0f0;
+  background-color: #f8f9fa;
 }
 
 .stocks-table th {
@@ -628,27 +666,32 @@ body {
 }
 
 .col-rank {
-  width: 60px;
+  width: 7%;
   text-align: center !important;
 }
 
 .col-name {
-  width: 250px;
+  width: 25%;
   text-align: left !important;
 }
 
+.col-market-cap {
+  width: 18%;
+  text-align: right !important;
+}
+
 .col-price {
-  width: 150px;
+  width: 15%;
   text-align: right !important;
 }
 
 .col-change {
-  width: 120px;
+  width: 15%;
   text-align: right !important;
 }
 
 .col-volume {
-  width: 150px;
+  width: 20%;
   text-align: right !important;
 }
 
@@ -708,18 +751,20 @@ body {
 .stock-change-value {
   font-size: 14px;
   font-weight: 600;
-  padding: 4px 8px;
-  border-radius: 4px;
 }
 
 .stock-change-value.positive {
   color: #ef4444;
-  background-color: #fef2f2;
 }
 
 .stock-change-value.negative {
   color: #3b82f6;
-  background-color: #eff6ff;
+}
+
+.stock-market-cap {
+  font-size: 14px;
+  color: #666;
+  font-weight: 600;
 }
 
 .stock-volume {
@@ -753,6 +798,7 @@ body {
 
 .strategy-table thead {
   border-bottom: 1px solid #f0f0f0;
+  background-color: #f8f9fa;
 }
 
 .strategy-table th {
@@ -827,11 +873,36 @@ body {
 .strategy-type-badge {
   display: inline-block;
   padding: 6px 12px;
-  background-color: #eff6ff;
-  color: #3182f6;
-  border-radius: 6px;
+  background-color: #A8D5E2;
+  color: #2C5F7D;
+  border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
+  border: 1px solid rgba(107, 182, 214, 0.3);
+}
+
+.strategy-type-badge-rsi {
+  background-color: #B8D4E3;
+  color: #1E4A5E;
+  border: 1px solid rgba(127, 196, 214, 0.4);
+}
+
+.strategy-type-badge-macd {
+  background-color: #FFE4A3;
+  color: #8B6914;
+  border: 1px solid rgba(255, 212, 128, 0.4);
+}
+
+.strategy-type-badge-볼린저밴드 {
+  background-color: #FFB6C1;
+  color: #8B1A3D;
+  border: 1px solid rgba(255, 155, 181, 0.4);
+}
+
+.strategy-type-badge-이동평균 {
+  background-color: #B8E6B8;
+  color: #1E5E1E;
+  border: 1px solid rgba(157, 216, 157, 0.4);
 }
 
 .strategy-gap {

@@ -7,52 +7,52 @@
 
 // Test JSON
 const temp = {
-    indices: [
-        {
-            name: '달러 환율',
-            yesterday: 1200,
-            today: 1250
-        },
-        {
-            name: '코스피',
-            yesterday: 2700,
-            today: 2550
-        },
-        {
-            name: '코스닥',
-            yesterday: 850,
-            today: 870
-        },
-        {
-            name: '나스닥',
-            yesterday: 15000,
-            today: 15250
-        },
-    ]
+  indices: [
+    {
+      name: '달러 환율',
+      yesterday: 1200,
+      today: 1250,
+    },
+    {
+      name: '코스피',
+      yesterday: 2700,
+      today: 2550,
+    },
+    {
+      name: '코스닥',
+      yesterday: 850,
+      today: 870,
+    },
+    {
+      name: '나스닥',
+      yesterday: 15000,
+      today: 15250,
+    },
+  ],
 };
 
 const zero = [
-    {
-        name: '달러 환율',
-        yesterday: 0,
-        today: 0
-    },
-    {
-        name: '코스피',
-        yesterday: 0,
-        today: 0
-    },
-    {
-        name: '코스닥',
-        yesterday: 0,
-        today: 0
-    },
-    {
-        name: '나스닥',
-        yesterday: 0,
-        today: 0
-    },
-]
+  {
+    name: '달러 환율',
+    yesterday: 0,
+    today: 0,
+  },
+  {
+    name: '코스피',
+    yesterday: 0,
+    today: 0,
+  },
+  {
+    name: '코스닥',
+    yesterday: 0,
+    today: 0,
+  },
+  {
+    name: '나스닥',
+    yesterday: 0,
+    today: 0,
+  },
+];
 
 // Django API 호출
 async function fetchMarketIndex() {
@@ -66,21 +66,21 @@ async function fetchMarketIndex() {
 
     // Test JSON
     const data = temp;
-    let responseJSON = []
+    let responseJSON = [];
 
-    if (data == null){
-        console.error(`[ WARNING ] Failed to pull data`);
-        return zero;
-    }else{
-        for (const item of data.indices) {
-            let change = item.today - item.yesterday
-            responseJSON.push({
-                name: item.name,
-                change: change,
-                changePercent: ((change / item.yesterday) * 100).toFixed(2),
-                today: item.today
-            })
-        }
+    if (data == null) {
+      console.error(`[ WARNING ] Failed to pull data`);
+      return zero;
+    } else {
+      for (const item of data.indices) {
+        let change = item.today - item.yesterday;
+        responseJSON.push({
+          name: item.name,
+          change: change,
+          changePercent: ((change / item.yesterday) * 100).toFixed(2),
+          today: item.today,
+        });
+      }
     }
     return responseJSON;
   } catch (error) {
@@ -90,26 +90,35 @@ async function fetchMarketIndex() {
   }
 }
 
+function isPositive(number) {
+  if (number > 0) return true;
+  else if (number < 0) return false;
+  else return null;
+}
+
 // 시장 지수 업데이트
 async function updateMarketIndices() {
-    const marketIndexData = await fetchMarketIndex();
-    const indexItemArray = document.getElementsByClassName('index-item');
-    console.log(indexItemArray)
-    
+  const marketIndexData = await fetchMarketIndex();
+  const indexItemArray = document.getElementsByClassName('index-item');
 
-    for(let i=0; i<indexItemArray.length; i++){
-        const indexValue = indexItemArray[i].querySelector('.index-value');
-        const indexChange = indexItemArray[i].querySelector('.index-change');
-        const indexPositive = marketIndexData[i].isPositive ? 'positive' : 'negative';
-        const indexSymbol = marketIndexData[i].isPositive ? '+' : '-';
+  for (let i = 0; i < indexItemArray.length; i++) {
+    const indexValue = indexItemArray[i].querySelector('.index-value');
+    const indexChange = indexItemArray[i].querySelector('.index-change');
+    const indexPositive = isPositive(marketIndexData[i].change)
+      ? 'positive'
+      : 'negative';
+    const indexSymbol = isPositive(marketIndexData[i].change) ? '+' : '';
+    console.log(indexSymbol);
 
-        indexValue.textContent = marketIndexData[i].today;
-        indexChange.textContent = marketIndexData[i].change;
+    indexValue.textContent = marketIndexData[i].today.toLocaleString('ko-KR');
+    indexChange.textContent = marketIndexData[i].change.toLocaleString('ko-KR');
 
-        indexChange.className = `index-change ${indexPositive}`;
-        indexChange.innerHTML = `
-            <span>${indexSymbol}${indexItemArray[i].change}</sapn>
-            <span>${indexSymbol}${indexItemArray[i].changePercent}</sapn>
-        `
-    }
+    indexChange.className = `index-change ${indexPositive}`;
+    indexChange.innerHTML = `
+            <span>${indexSymbol}${marketIndexData[i].change.toLocaleString(
+      'ko-KR'
+    )}</sapn>
+            <span>(${indexSymbol}${marketIndexData[i].changePercent}%)</sapn>
+        `;
+  }
 }

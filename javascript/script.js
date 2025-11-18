@@ -6,6 +6,7 @@ const stocksTableData = [
     name: 'SK하이닉스',
     code: '000660',
     price: 573500,
+    marketCap: '420,000억',
     change: -3.28,
     isPositive: false,
     volume: '135억',
@@ -15,6 +16,7 @@ const stocksTableData = [
     name: '삼성전자',
     code: '005930',
     price: 97100,
+    marketCap: '5,800,000억',
     change: -2.11,
     isPositive: false,
     volume: '70억',
@@ -24,6 +26,7 @@ const stocksTableData = [
     name: 'NAVER',
     code: '035420',
     price: 198500,
+    marketCap: '320,000억',
     change: 3.12,
     isPositive: true,
     volume: '58억',
@@ -33,6 +36,7 @@ const stocksTableData = [
     name: '카카오',
     code: '035720',
     price: 52300,
+    marketCap: '240,000억',
     change: -0.85,
     isPositive: false,
     volume: '45억',
@@ -42,6 +46,7 @@ const stocksTableData = [
     name: 'LG에너지솔루션',
     code: '373220',
     price: 425000,
+    marketCap: '980,000억',
     change: 1.85,
     isPositive: true,
     volume: '42억',
@@ -51,6 +56,7 @@ const stocksTableData = [
     name: '현대차',
     code: '005380',
     price: 261000,
+    marketCap: '570,000억',
     change: -2.97,
     isPositive: false,
     volume: '38억',
@@ -60,6 +66,7 @@ const stocksTableData = [
     name: '셀트리온',
     code: '068270',
     price: 187500,
+    marketCap: '150,000억',
     change: 2.15,
     isPositive: true,
     volume: '35억',
@@ -69,6 +76,7 @@ const stocksTableData = [
     name: 'POSCO홀딩스',
     code: '005490',
     price: 425000,
+    marketCap: '380,000억',
     change: -1.25,
     isPositive: false,
     volume: '32억',
@@ -78,6 +86,7 @@ const stocksTableData = [
     name: 'KB금융',
     code: '105560',
     price: 58200,
+    marketCap: '250,000억',
     change: 0.92,
     isPositive: true,
     volume: '28억',
@@ -87,6 +96,7 @@ const stocksTableData = [
     name: '신한지주',
     code: '055550',
     price: 41200,
+    marketCap: '180,000억',
     change: -1.45,
     isPositive: false,
     volume: '25억',
@@ -154,7 +164,7 @@ let currentTab = 'realtime';
 //     const newSpan = document.createElement('span');
 //     newSpan.className = `index-value ${animationClass}`;
 //     newSpan.textContent = newValue.toLocaleString();
-    
+
 //     valueSpan.parentNode.appendChild(newSpan);
 //     valueSpan.classList.add(isPositive ? 'value-out-up' : 'value-out-down');
 
@@ -231,6 +241,9 @@ function renderStocksTable() {
                         <div class="stock-code-text">${stock.code}</div>
                     </div>
                 </div>
+            </td>
+            <td class="col-market-cap">
+                <div class="stock-market-cap">${stock.marketCap}</div>
             </td>
             <td class="col-price">
                 <div class="stock-price-value">${stock.price.toLocaleString()}</div>
@@ -397,7 +410,7 @@ const strategyData = [
     buyPrice: 71000,
     sellPrice: 73500,
     strategy: 'RSI',
-    status: 'selling' // buying, selling, completed
+    status: 'selling', // buying, selling, completed
   },
   {
     name: 'SK하이닉스',
@@ -405,7 +418,7 @@ const strategyData = [
     buyPrice: 140000,
     sellPrice: 145000,
     strategy: 'MACD',
-    status: 'completed'
+    status: 'completed',
   },
   {
     name: 'NAVER',
@@ -413,7 +426,7 @@ const strategyData = [
     buyPrice: 195000,
     sellPrice: null,
     strategy: 'RSI',
-    status: 'buying'
+    status: 'buying',
   },
   {
     name: '카카오',
@@ -421,7 +434,7 @@ const strategyData = [
     buyPrice: 51000,
     sellPrice: 52500,
     strategy: '볼린저밴드',
-    status: 'selling'
+    status: 'selling',
   },
   {
     name: 'LG에너지솔루션',
@@ -429,8 +442,8 @@ const strategyData = [
     buyPrice: 420000,
     sellPrice: 430000,
     strategy: '이동평균',
-    status: 'completed'
-  }
+    status: 'completed',
+  },
 ];
 
 // 전략 현황 테이블 렌더링
@@ -440,7 +453,7 @@ function renderStrategyTable() {
 
   strategyData.forEach((item) => {
     const row = document.createElement('tr');
-    
+
     // 갭(%) 계산
     let gap = '-';
     let gapClass = '';
@@ -470,13 +483,17 @@ function renderStrategyTable() {
         <div class="strategy-stock-code">${item.code}</div>
       </td>
       <td class="col-buy-price">
-        <div class="strategy-price">${item.buyPrice ? item.buyPrice.toLocaleString() : '-'}</div>
+        <div class="strategy-price">${
+          item.buyPrice ? item.buyPrice.toLocaleString() : '-'
+        }</div>
       </td>
       <td class="col-sell-price">
-        <div class="strategy-price">${item.sellPrice ? item.sellPrice.toLocaleString() : '-'}</div>
+        <div class="strategy-price">${
+          item.sellPrice ? item.sellPrice.toLocaleString() : '-'
+        }</div>
       </td>
       <td class="col-strategy-type">
-        <div class="strategy-type-badge">${item.strategy}</div>
+        <div class="strategy-type-badge strategy-type-badge-${item.strategy.toLowerCase()}">${item.strategy}</div>
       </td>
       <td class="col-gap">
         <div class="strategy-gap ${gapClass}">${gap}</div>
@@ -498,8 +515,7 @@ async function init() {
   setInterval(updateCurrentTime, 60000); // 1분마다 업데이트
   setInterval(updateMarketStatus, 60000); // 1분마다 시장 상태 업데이트
 
-  const marketIndicesData = await fetchMarketIndex();
-  setInterval(updateMarketIndices, 10000); // 10초마다 시장 지수 업데이트
+  updateMarketIndices();
 
   renderStocksTable();
   renderStrategyTable();
@@ -528,23 +544,47 @@ async function init() {
 function initOrderForm() {
   const orderBtn = document.getElementById('strategyOrderBtn');
   const orderFormContainer = document.getElementById('orderFormContainer');
+  const orderFormBackdrop = document.getElementById('orderFormBackdrop');
   const orderFormClose = document.getElementById('orderFormClose');
   const orderSubmitBtn = document.getElementById('orderSubmitBtn');
   const riskLevelBtns = document.querySelectorAll('.risk-level-btn');
 
   let selectedRisk = null;
 
+  // 모달 닫기 함수
+  const closeModal = () => {
+    orderFormContainer.classList.remove('active');
+    orderBtn.classList.remove('form-open');
+    document.body.style.overflow = '';
+  };
+
+  // 모달 열기 함수
+  const openModal = () => {
+    orderFormContainer.classList.add('active');
+    orderBtn.classList.add('form-open');
+    document.body.style.overflow = 'hidden';
+  };
+
   // 전략 주문 버튼 클릭
   orderBtn.addEventListener('click', () => {
-    orderFormContainer.classList.toggle('active');
-    orderBtn.classList.toggle('form-open');
+    if (orderFormContainer.classList.contains('active')) {
+      closeModal();
+    } else {
+      openModal();
+    }
+  });
+
+  // 배경 클릭 시 닫기
+  orderFormBackdrop.addEventListener('click', closeModal);
+
+  // 모달 폼 내부 클릭 시 닫히지 않도록 이벤트 전파 방지
+  const orderForm = document.querySelector('.order-form');
+  orderForm.addEventListener('click', (e) => {
+    e.stopPropagation();
   });
 
   // 폼 닫기 버튼 클릭
-  orderFormClose.addEventListener('click', () => {
-    orderFormContainer.classList.remove('active');
-    orderBtn.classList.remove('form-open');
-  });
+  orderFormClose.addEventListener('click', closeModal);
 
   // 위험도 버튼 클릭
   riskLevelBtns.forEach((btn) => {
@@ -577,13 +617,14 @@ function initOrderForm() {
     }
 
     // 주문 정보 출력
-    const riskText = selectedRisk === 'low' ? '하' : selectedRisk === 'medium' ? '중' : '상';
+    const riskText =
+      selectedRisk === 'low' ? '하' : selectedRisk === 'medium' ? '중' : '상';
     alert(
       `전략 주문이 접수되었습니다.\n\n` +
-      `종목: ${orderValue}\n` +
-      `수량: ${orderQuantity}\n` +
-      `투자 전략: ${orderStrategy}\n` +
-      `위험도: ${riskText}`
+        `종목: ${orderValue}\n` +
+        `수량: ${orderQuantity}\n` +
+        `투자 전략: ${orderStrategy}\n` +
+        `위험도: ${riskText}`
     );
 
     // 폼 초기화
@@ -594,11 +635,9 @@ function initOrderForm() {
     selectedRisk = null;
 
     // 폼 닫기
-    orderFormContainer.classList.remove('active');
-    orderBtn.classList.remove('form-open');
+    closeModal();
   });
 }
 
 // 페이지 로드 시 초기화
 window.addEventListener('DOMContentLoaded', init);
-
