@@ -111,80 +111,105 @@ let currentTab = 'realtime';
 // Top 10 종목 리스트 가져오기
 async function fetchTop10Stocks() {
   try {
-    // const response = await fetch('http://localhost:8000/api/stocks/top10/');
-    // if (!response.ok) {
-    //   throw new Error(`[ERROR] fetchTop10Stocks() : ${response.status}`);
-    // }
-    // const data = await response.json();
-    
-    // Test JSON - Top 10 종목 코드 리스트
-    const testData = {
-      stocks: [
-        { rank: 1, code: '000660' },
-        { rank: 2, code: '005930' },
-        { rank: 3, code: '035420' },
-        { rank: 4, code: '035720' },
-        { rank: 5, code: '373220' },
-        { rank: 6, code: '005380' },
-        { rank: 7, code: '068270' },
-        { rank: 8, code: '005490' },
-        { rank: 9, code: '105560' },
-        { rank: 10, code: '055550' },
-      ]
-    };
-    const data = testData;
+    const response = await fetch('http://localhost:8000/api/kis-test/rank/');
+    if (!response.ok) {
+      throw new Error(`[ERROR] fetchTop10Stocks() : ${response.status}`);
+    }
+    const data = await response.json();
 
-    if (data == null || !data.stocks) {
-      console.error('[WARNING] Failed to pull top 10 stocks');
-      return defaultStocksTableData.map((s) => ({ rank: s.rank, code: s.code }));
+    if (data == null || !data.rank || !Array.isArray(data.rank)) {
+      console.error('[WARNING] Failed to pull top 10 stocks - Invalid response format');
+      return defaultStocksTableData.map((s, index) => ({ rank: index + 1, name: s.name, code: s.code }));
     }
 
-    return data.stocks;
+    // API 응답에서 rank 배열을 순위대로 매핑
+    // rank 배열은 이미 순서대로 정렬되어 있으므로 index + 1로 순위 부여
+    return data.rank.map((item, index) => ({
+      rank: index + 1,
+      name: item.name,
+      code: item.code,
+    }));
   } catch (error) {
     console.error(`[FAIL] Failed to fetch top 10 stocks: ${error}`);
-    return defaultStocksTableData.map((s) => ({ rank: s.rank, code: s.code }));
+    return defaultStocksTableData.map((s, index) => ({ rank: index + 1, name: s.name, code: s.code }));
   }
+}
+
+// 숫자를 억 단위로 포맷팅하는 함수 (시가총액용)
+function formatMarketCap(value) {
+  if (!value || value === 0) return '-';
+  const billion = Math.floor(value / 100000000); // 억 단위
+  
+  if (billion >= 1) {
+    // 억 단위로 표현 (예: 420,000억)
+    return `${billion.toLocaleString()}억`;
+  }
+  // 억 단위 미만인 경우 만 단위로 표현
+  const million = Math.floor(value / 10000);
+  return `${million.toLocaleString()}만`;
+}
+
+// 거래대금을 포맷팅하는 함수
+function formatVolume(value) {
+  if (!value || value === 0) return '-';
+  const billion = Math.floor(value / 100000000); // 억 단위
+  
+  if (billion >= 1) {
+    // 억 단위로 표현 (예: 135억)
+    return `${billion.toLocaleString()}억`;
+  }
+  // 억 단위 미만인 경우 만 단위로 표현
+  const million = Math.floor(value / 10000);
+  return `${million.toLocaleString()}만`;
 }
 
 // 개별 종목 데이터 가져오기
 async function fetchStockData(code) {
   try {
-    // const response = await fetch(`http://localhost:8000/api/stocks/${code}/`);
-    // if (!response.ok) {
-    //   throw new Error(`[ERROR] fetchStockData() : ${response.status}`);
-    // }
-    // const data = await response.json();
-    
-    // Test JSON - 개별 종목 데이터
-    const testDataMap = {
-      '000660': { name: 'SK하이닉스', price: 573500, marketCap: '420,000억', change: -3.28, volume: '135억' },
-      '005930': { name: '삼성전자', price: 97100, marketCap: '5,800,000억', change: -2.11, volume: '70억' },
-      '035420': { name: 'NAVER', price: 198500, marketCap: '320,000억', change: 3.12, volume: '58억' },
-      '035720': { name: '카카오', price: 52300, marketCap: '240,000억', change: -0.85, volume: '45억' },
-      '373220': { name: 'LG에너지솔루션', price: 425000, marketCap: '980,000억', change: 1.85, volume: '42억' },
-      '005380': { name: '현대차', price: 261000, marketCap: '570,000억', change: -2.97, volume: '38억' },
-      '068270': { name: '셀트리온', price: 187500, marketCap: '150,000억', change: 2.15, volume: '35억' },
-      '005490': { name: 'POSCO홀딩스', price: 425000, marketCap: '380,000억', change: -1.25, volume: '32억' },
-      '105560': { name: 'KB금융', price: 58200, marketCap: '250,000억', change: 0.92, volume: '28억' },
-      '055550': { name: '신한지주', price: 41200, marketCap: '180,000억', change: -1.45, volume: '25억' },
-    };
-    
-    const data = testDataMap[code] || defaultStocksTableData.find(s => s.code === code);
-    
-    if (!data) {
-      console.error(`[WARNING] Failed to pull stock data for code: ${code}`);
-      return null;
+    const response = await fetch(`http://127.0.0.1:8000/api/kis-test/price/?codes=${code}`);
+    if (!response.ok) {
+      throw new Error(`[ERROR] fetchStockData() : ${response.status}`);
+    }
+    const data = await response.json();
+
+    if (data == null || !data.stock || !Array.isArray(data.stock) || data.stock.length === 0) {
+      console.error(`[WARNING] Failed to pull stock data for code: ${code} - Invalid response format`);
+      const fallbackData = defaultStocksTableData.find(s => s.code === code);
+      return fallbackData ? {
+        name: fallbackData.name,
+        code: fallbackData.code,
+        price: fallbackData.price,
+        marketCap: fallbackData.marketCap,
+        change: fallbackData.change,
+        volume: fallbackData.volume,
+        isPositive: fallbackData.isPositive,
+      } : null;
     }
 
+    const stockInfo = data.stock[0];
+    
+    // API 응답 데이터를 테이블 형식에 맞게 변환
     return {
-      ...data,
-      code: code,
-      isPositive: data.change >= 0,
+      name: stockInfo.name || '-',
+      code: stockInfo.code || code,
+      price: stockInfo.currentPrice || 0, // 현재가
+      marketCap: formatMarketCap(stockInfo.price), // 시가총액 (price 필드)
+      change: stockInfo.changePercent || 0, // 변동률
+      volume: formatVolume(stockInfo.volume), // 거래대금
+      isPositive: (stockInfo.changePercent || 0) >= 0,
     };
   } catch (error) {
     console.error(`[FAIL] Failed to fetch stock data for ${code}: ${error}`);
     const fallbackData = defaultStocksTableData.find(s => s.code === code);
-    return fallbackData || null;
+    return fallbackData ? {
+      name: fallbackData.name,
+      code: fallbackData.code,
+      price: fallbackData.price,
+      marketCap: fallbackData.marketCap,
+      change: fallbackData.change,
+      volume: fallbackData.volume,
+      isPositive: fallbackData.isPositive,
+    } : null;
   }
 }
 
@@ -207,6 +232,10 @@ async function renderStocksTable() {
     row.dataset.stockCode = stockInfo.code;
     row.dataset.rank = stockInfo.rank;
 
+    // API에서 받아온 종목명이 있으면 사용, 없으면 로딩 중 표시
+    const stockName = stockInfo.name || '로딩 중...';
+    const stockInitial = stockName !== '로딩 중...' ? stockName.substring(0, 1) : '-';
+
     // 로딩 상태로 초기 행 생성
     row.innerHTML = `
       <td class="col-rank">
@@ -214,9 +243,9 @@ async function renderStocksTable() {
       </td>
       <td class="col-name">
         <div class="stock-info">
-          <div class="stock-icon">-</div>
+          <div class="stock-icon">${stockInitial}</div>
           <div class="stock-name-group">
-            <div class="stock-name">로딩 중...</div>
+            <div class="stock-name">${stockName}</div>
             <div class="stock-code-text">${stockInfo.code}</div>
           </div>
         </div>
@@ -264,18 +293,18 @@ async function renderStocksTable() {
         </div>
       </td>
       <td class="col-market-cap">
-        <div class="stock-market-cap">${stockData.marketCap}</div>
+        <div class="stock-market-cap">${stockData.marketCap || '-'}</div>
       </td>
       <td class="col-price">
-        <div class="stock-price-value">${stockData.price.toLocaleString()}</div>
+        <div class="stock-price-value">${stockData.price ? stockData.price.toLocaleString() : '-'}</div>
       </td>
       <td class="col-change">
         <div class="stock-change-value ${changeClass}">
-          ${changeSymbol}${Math.abs(stockData.change).toFixed(2)}%
+          ${changeSymbol}${Math.abs(stockData.change || 0).toFixed(2)}%
         </div>
       </td>
       <td class="col-volume">
-        <div class="stock-volume">${stockData.volume}</div>
+        <div class="stock-volume">${stockData.volume || '-'}</div>
       </td>
     `;
 
