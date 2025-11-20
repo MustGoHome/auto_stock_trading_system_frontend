@@ -1,6 +1,5 @@
-// 정적 데이터
-
-const stocksTableData = [
+// 정적 데이터 (폴백용)
+const defaultStocksTableData = [
   {
     rank: 1,
     name: 'SK하이닉스',
@@ -103,261 +102,352 @@ const stocksTableData = [
   },
 ];
 
-const popularStocksData = [
-  {
-    name: '삼성전자',
-    code: '005930',
-    price: 71500,
-    change: 2.35,
-    isPositive: true,
-  },
-  {
-    name: 'SK하이닉스',
-    code: '000660',
-    price: 142500,
-    change: -1.25,
-    isPositive: false,
-  },
-  {
-    name: 'NAVER',
-    code: '035420',
-    price: 198500,
-    change: 3.12,
-    isPositive: true,
-  },
-  {
-    name: '카카오',
-    code: '035720',
-    price: 52300,
-    change: -0.85,
-    isPositive: false,
-  },
-  {
-    name: 'LG에너지솔루션',
-    code: '373220',
-    price: 425000,
-    change: 1.85,
-    isPositive: true,
-  },
-  {
-    name: '현대차',
-    code: '005380',
-    price: 245000,
-    change: 0.92,
-    isPositive: true,
-  },
-];
+// 실시간으로 가져온 데이터를 저장할 배열
+let stocksTableData = [];
 
 let currentFilter = 'all';
-let currentTab = 'realtime';
 
-// 값 업데이트 애니메이션
-// function updateIndexValue(element, newValue, oldValue) {
-//     if (newValue === oldValue) return;
-
-//     const valueSpan = element.querySelector('.index-value');
-//     if (!valueSpan) return;
-
-//     const isPositive = newValue > oldValue;
-//     const animationClass = isPositive ? 'value-up' : 'value-down';
-
-//     const newSpan = document.createElement('span');
-//     newSpan.className = `index-value ${animationClass}`;
-//     newSpan.textContent = newValue.toLocaleString();
-
-//     valueSpan.parentNode.appendChild(newSpan);
-//     valueSpan.classList.add(isPositive ? 'value-out-up' : 'value-out-down');
-
-//     setTimeout(() => {
-//         if (valueSpan.parentNode) {
-//             valueSpan.parentNode.removeChild(valueSpan);
-//         }
-//     }, 300);
-// }
-
-// 미니 차트 그리기
-function drawMiniChart(canvas, data, isPositive) {
-  if (!canvas || !data || data.length === 0) return;
-  const ctx = canvas.getContext('2d');
-  const width = canvas.offsetWidth;
-  const height = canvas.offsetHeight;
-  canvas.width = width;
-  canvas.height = height;
-
-  ctx.clearRect(0, 0, width, height);
-
-  const minValue = Math.min(...data);
-  const maxValue = Math.max(...data);
-  const range = maxValue - minValue || 1;
-
-  ctx.strokeStyle = isPositive ? '#ef4444' : '#3b82f6';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-
-  data.forEach((value, index) => {
-    const x = (index / (data.length - 1)) * width;
-    const y = height - ((value - minValue) / range) * height;
-
-    if (index === 0) {
-      ctx.moveTo(x, y);
-    } else {
-      ctx.lineTo(x, y);
+// Top 10 종목 리스트 가져오기 (순위, 종목코드, 종목명 모두 가져오기)
+async function fetchTop10Stocks() {
+  try {
+    console.log('[DEBUG] Fetching top 10 stocks from API...');
+    const response = await fetch('http://localhost:8000/api/kis-test/rank/');
+    if (!response.ok) {
+      throw new Error(`[ERROR] fetchTop10Stocks() : ${response.status}`);
     }
-  });
+    const data = await response.json();
 
-  ctx.stroke();
+    console.log('[DEBUG] API Response:', data);
+
+    if (data == null || !data.rank || !Array.isArray(data.rank)) {
+      console.error('[WARNING] Failed to pull top 10 stocks - Invalid response format');
+      return defaultStocksTableData.map((s, index) => ({ 
+        rank: index + 1, 
+        name: s.name, 
+        code: s.code 
+      }));
+    }
+
+    // API 응답에서 rank 배열의 모든 항목을 순위대로 매핑
+    // rank 배열은 이미 순서대로 정렬되어 있으므로 index + 1로 순위 부여
+    const top10Stocks = data.rank.map((item, index) => ({
+      rank: index + 1,
+      name: item.name || '',
+      code: item.code || '',
+    }));
+
+    console.log('[DEBUG] Mapped top 10 stocks:', top10Stocks);
+    
+    // 모든 종목의 코드와 이름이 있는지 확인
+    const incompleteStocks = top10Stocks.filter(s => !s.code || !s.name);
+    if (incompleteStocks.length > 0) {
+      console.warn('[WARNING] Some stocks missing code or name:', incompleteStocks);
+    }
+
+    return top10Stocks;
+  } catch (error) {
+    console.error(`[FAIL] Failed to fetch top 10 stocks: ${error}`);
+    return defaultStocksTableData.map((s, index) => ({ 
+      rank: index + 1, 
+      name: s.name, 
+      code: s.code 
+    }));
+  }
+}
+
+// 종목 이름에 따라 아이콘 경로를 반환하는 함수
+function getStockIconPath(stockName) {
+  if (!stockName) return null;
+  
+  // 종목 이름에 키워드가 포함되어 있으면 해당 아이콘 반환
+  if (stockName.includes('삼성')) {
+    return 'icons/삼성.png';
+  } else if (stockName.includes('현대')) {
+    return 'icons/현대.png';
+  } else if (stockName.includes('SK')) {
+    return 'icons/SK.png';
+  } else if (stockName.includes('LG')) {
+    return 'icons/LG.png';
+  } else if (stockName.includes('KB')) {
+    return 'icons/KB.png';
+  } else if (stockName.includes('두산')) {
+    return 'icons/두산.png';
+  } else if (stockName.includes('한화')) {
+    return 'icons/한화.png';
+  } else if (stockName.includes('NAVER') || stockName.includes('네이버')) {
+    return 'icons/네이버.png';
+  } else if (stockName.includes('카카오')) {
+    return 'icons/카카오.png';
+  }
+  
+  // 매칭되는 아이콘이 없으면 null 반환 (기본 아이콘 사용)
+  return null;
+}
+
+// 종목 아이콘 HTML을 생성하는 함수
+function getStockIconHTML(stockName) {
+  const iconPath = getStockIconPath(stockName);
+  
+  if (iconPath) {
+    // 아이콘 이미지 사용
+    return `<img src="${iconPath}" alt="${stockName}" class="stock-icon-image" />`;
+  } else {
+    // 기본 아이콘 (종목명 첫 글자)
+    const stockInitial = stockName ? stockName.substring(0, 1) : '-';
+    return stockInitial;
+  }
+}
+
+// 숫자를 억 단위로 포맷팅하는 함수 (시가총액용)
+function formatMarketCap(value) {
+  if (!value || value === 0) return '-';
+  const billion = Math.floor(value / 100000000); // 억 단위
+  
+  if (billion >= 1) {
+    // 억 단위로 표현 (예: 420,000억)
+    return `${billion.toLocaleString()}억`;
+  }
+  // 억 단위 미만인 경우 만 단위로 표현
+  const million = Math.floor(value / 10000);
+  return `${million.toLocaleString()}만`;
+}
+
+// 거래대금을 포맷팅하는 함수
+function formatVolume(value) {
+  if (!value || value === 0) return '-';
+  const billion = Math.floor(value / 100000000); // 억 단위
+  
+  if (billion >= 1) {
+    // 억 단위로 표현 (예: 135억)
+    return `${billion.toLocaleString()}억`;
+  }
+  // 억 단위 미만인 경우 만 단위로 표현
+  const million = Math.floor(value / 10000);
+  return `${million.toLocaleString()}만`;
+}
+
+// 개별 종목 데이터 가져오기
+async function fetchStockData(code, stockName = '') {
+  try {
+    const response = await fetch(`http://127.0.0.1:8000/api/kis-test/price/?codes=${code}`);
+    if (!response.ok) {
+      throw new Error(`[ERROR] fetchStockData() : ${response.status}`);
+    }
+    const data = await response.json();
+
+    if (data == null || !data.stock || !Array.isArray(data.stock) || data.stock.length === 0) {
+      console.error(`[WARNING] Failed to pull stock data for code: ${code} - Invalid response format`);
+      // 데이터를 불러오지 못한 경우 0으로 고정된 기본값 반환
+      return {
+        name: stockName || '-',
+        code: code,
+        price: 0,
+        marketCap: '0',
+        change: 0,
+        volume: '0',
+        isPositive: false,
+      };
+    }
+
+    const stockInfo = data.stock[0];
+    
+    // API 응답 데이터를 테이블 형식에 맞게 변환
+    return {
+      name: stockInfo.name || stockName || '-',
+      code: stockInfo.code || code,
+      price: stockInfo.currentPrice || 0, // 현재가
+      marketCap: formatMarketCap(stockInfo.price), // 시가총액 (price 필드)
+      change: stockInfo.changePercent || 0, // 변동률
+      volume: formatVolume(stockInfo.volume), // 거래대금
+      isPositive: (stockInfo.changePercent || 0) >= 0,
+    };
+  } catch (error) {
+    console.error(`[FAIL] Failed to fetch stock data for ${code}: ${error}`);
+    // 데이터를 불러오지 못한 경우 0으로 고정된 기본값 반환
+    return {
+      name: stockName || '-',
+      code: code,
+      price: 0,
+      marketCap: '0',
+      change: 0,
+      volume: '0',
+      isPositive: false,
+    };
+  }
 }
 
 // 주식 테이블 렌더링
-function renderStocksTable() {
+async function renderStocksTable() {
   const tbody = document.getElementById('stocksTableBody');
   tbody.innerHTML = '';
 
-  let filteredData = stocksTableData;
-
-  // 필터 적용
-  if (currentFilter === 'rising') {
-    filteredData = stocksTableData.filter((s) => s.isPositive);
-  } else if (currentFilter === 'falling') {
-    filteredData = stocksTableData.filter((s) => !s.isPositive);
+  // 1단계: Top 10 종목 리스트 먼저 가져오기
+  const top10Stocks = await fetchTop10Stocks();
+  
+  console.log('[DEBUG] Top 10 stocks fetched:', top10Stocks);
+  
+  if (!top10Stocks || top10Stocks.length === 0) {
+    console.error('[WARNING] No top 10 stocks found');
+    return;
   }
 
-  filteredData.forEach((stock) => {
+  // 2단계: 각 종목 코드로 빈 행 먼저 생성
+  top10Stocks.forEach((stockInfo) => {
     const row = document.createElement('tr');
+    row.dataset.stockCode = stockInfo.code;
+    row.dataset.rank = stockInfo.rank;
 
-    const changeClass = stock.isPositive ? 'positive' : 'negative';
-    const changeSymbol = stock.isPositive ? '+' : '';
-    const stockInitial = stock.name.substring(0, 1);
+    // API에서 받아온 종목명이 있으면 사용, 없으면 로딩 중 표시
+    const stockName = stockInfo.name || '로딩 중...';
+    const stockIconHTML = getStockIconHTML(stockName);
 
+    // 로딩 상태로 초기 행 생성
     row.innerHTML = `
-            <td class="col-rank">
-                <span class="stock-rank">${stock.rank}</span>
-            </td>
-            <td class="col-name">
-                <div class="stock-info">
-                    <div class="stock-icon">${stockInitial}</div>
-                    <div class="stock-name-group">
-                        <div class="stock-name">${stock.name}</div>
-                        <div class="stock-code-text">${stock.code}</div>
-                    </div>
-                </div>
-            </td>
-            <td class="col-market-cap">
-                <div class="stock-market-cap">${stock.marketCap}</div>
-            </td>
-            <td class="col-price">
-                <div class="stock-price-value">${stock.price.toLocaleString()}</div>
-            </td>
-            <td class="col-change">
-                <div class="stock-change-value ${changeClass}">
-                    ${changeSymbol}${Math.abs(stock.change).toFixed(2)}%
-                </div>
-            </td>
-            <td class="col-volume">
-                <div class="stock-volume">${stock.volume}</div>
-            </td>
-        `;
+      <td class="col-rank">
+        <span class="stock-rank">${stockInfo.rank}</span>
+      </td>
+      <td class="col-name">
+        <div class="stock-info">
+          <div class="stock-icon">${stockIconHTML}</div>
+          <div class="stock-name-group">
+            <div class="stock-name">${stockName}</div>
+            <div class="stock-code-text">${stockInfo.code}</div>
+          </div>
+        </div>
+      </td>
+      <td class="col-market-cap">
+        <div class="stock-market-cap">-</div>
+      </td>
+      <td class="col-price">
+        <div class="stock-price-value">-</div>
+      </td>
+      <td class="col-change">
+        <div class="stock-change-value">-</div>
+      </td>
+      <td class="col-volume">
+        <div class="stock-volume">-</div>
+      </td>
+    `;
 
     tbody.appendChild(row);
   });
-}
 
-// 인기 종목 렌더링
-function renderPopularStocks() {
-  const container = document.getElementById('popularStocksGrid');
-  container.innerHTML = '';
+  console.log('[DEBUG] Created', tbody.children.length, 'rows');
 
-  popularStocksData.forEach((stock) => {
-    const card = document.createElement('div');
-    card.className = 'popular-stock-card';
+  // 3단계: 각 순위의 종목은 자신의 종목 코드로 개별 fetch 요청
+  // Promise.allSettled를 사용하여 일부 실패해도 나머지는 계속 진행
+  const stockPromises = top10Stocks.map(async (stockInfo) => {
+    // 각 순위의 종목은 자신의 종목 코드로 fetch 요청
+    const stockCode = stockInfo.code;
+    
+    if (!stockCode) {
+      console.error(`[ERROR] Stock code is missing for rank ${stockInfo.rank}`);
+      return;
+    }
 
-    const changeClass = stock.isPositive ? 'positive' : 'negative';
-    const changeSymbol = stock.isPositive ? '+' : '';
+    try {
+      console.log(`[DEBUG] Fetching data for rank ${stockInfo.rank}, code: ${stockCode}, name: ${stockInfo.name}`);
+      
+      // 자신의 종목 코드로 데이터 가져오기 (종목명도 전달)
+      // fetchStockData는 항상 데이터를 반환하므로 null 체크 불필요
+      const stockData = await fetchStockData(stockCode, stockInfo.name);
 
-    card.innerHTML = `
-            <div class="popular-stock-header">
-                <div>
-                    <div class="popular-stock-name">${stock.name}</div>
-                    <div class="popular-stock-code">${stock.code}</div>
-                </div>
+      console.log(`[DEBUG] Data fetched for ${stockCode}:`, stockData);
+
+      // 자신의 종목 코드에 해당하는 행 찾기
+      const row = tbody.querySelector(`tr[data-stock-code="${stockCode}"]`);
+      if (!row) {
+        console.error(`[ERROR] Row not found for stock: ${stockCode} (rank: ${stockInfo.rank})`);
+        return;
+      }
+
+      const changeClass = stockData.isPositive ? 'positive' : 'negative';
+      const changeSymbol = stockData.isPositive ? '+' : '';
+      const finalStockName = stockData.name || stockInfo.name || '-';
+      const stockIconHTML = getStockIconHTML(finalStockName);
+
+      // 행 업데이트
+      row.innerHTML = `
+        <td class="col-rank">
+          <span class="stock-rank">${stockInfo.rank}</span>
+        </td>
+        <td class="col-name">
+          <div class="stock-info">
+            <div class="stock-icon">${stockIconHTML}</div>
+            <div class="stock-name-group">
+              <div class="stock-name">${finalStockName}</div>
+              <div class="stock-code-text">${stockData.code || stockCode}</div>
             </div>
-            <div class="popular-stock-price-info">
-                <div class="popular-stock-price">₩${stock.price.toLocaleString()}</div>
-                <div class="popular-stock-change ${changeClass}">
-                    ${changeSymbol}${stock.change.toFixed(2)}%
-                </div>
-            </div>
-            <div class="popular-stock-chart-container">
-                <canvas class="popular-stock-chart" data-stock="${
-                  stock.code
-                }"></canvas>
-            </div>
-        `;
+          </div>
+        </td>
+        <td class="col-market-cap">
+          <div class="stock-market-cap">${stockData.marketCap || '0'}</div>
+        </td>
+        <td class="col-price">
+          <div class="stock-price-value">${stockData.price ? stockData.price.toLocaleString() : '0'}</div>
+        </td>
+        <td class="col-change">
+          <div class="stock-change-value ${changeClass}">
+            ${changeSymbol}${Math.abs(stockData.change || 0).toFixed(2)}%
+          </div>
+        </td>
+        <td class="col-volume">
+          <div class="stock-volume">${stockData.volume || '0'}</div>
+        </td>
+      `;
 
-    container.appendChild(card);
+      // stocksTableData 배열에도 저장 (필터링용)
+      stocksTableData[stockInfo.rank - 1] = {
+        rank: stockInfo.rank,
+        ...stockData,
+      };
 
-    // 차트 그리기
-    setTimeout(() => {
-      drawStockChart(
-        card.querySelector('.popular-stock-chart'),
-        stock.data,
-        stock.isPositive
-      );
-    }, 10);
-  });
-}
-
-// 주식 차트 그리기
-function drawStockChart(canvas, data, isPositive) {
-  const ctx = canvas.getContext('2d');
-  const width = canvas.offsetWidth;
-  const height = canvas.offsetHeight;
-  canvas.width = width;
-  canvas.height = height;
-
-  const padding = 5;
-  const chartWidth = width - padding * 2;
-  const chartHeight = height - padding * 2;
-
-  const minValue = Math.min(...data);
-  const maxValue = Math.max(...data);
-  const range = maxValue - minValue || 1;
-
-  ctx.clearRect(0, 0, width, height);
-
-  // 그라데이션 배경
-  const gradient = ctx.createLinearGradient(0, padding, 0, height - padding);
-  const color1 = isPositive
-    ? 'rgba(239, 68, 68, 0.1)'
-    : 'rgba(59, 130, 246, 0.1)';
-  const color2 = isPositive
-    ? 'rgba(239, 68, 68, 0.05)'
-    : 'rgba(59, 130, 246, 0.05)';
-  gradient.addColorStop(0, color1);
-  gradient.addColorStop(1, color2);
-
-  // 라인
-  ctx.beginPath();
-  ctx.strokeStyle = isPositive ? '#ef4444' : '#3b82f6';
-  ctx.lineWidth = 2;
-
-  data.forEach((value, index) => {
-    const x = padding + (index / (data.length - 1)) * chartWidth;
-    const y =
-      padding + chartHeight - ((value - minValue) / range) * chartHeight;
-
-    if (index === 0) {
-      ctx.moveTo(x, y);
-    } else {
-      ctx.lineTo(x, y);
+      console.log(`[DEBUG] Successfully updated row for rank ${stockInfo.rank}, code: ${stockCode}`);
+    } catch (error) {
+      console.error(`[ERROR] Failed to process stock ${stockCode} (rank: ${stockInfo.rank}):`, error);
     }
   });
 
-  ctx.stroke();
+  // Promise.allSettled를 사용하여 일부 실패해도 나머지는 계속 진행
+  const results = await Promise.allSettled(stockPromises);
+  const successCount = results.filter(r => r.status === 'fulfilled').length;
+  const failCount = results.filter(r => r.status === 'rejected').length;
+  
+  console.log(`[DEBUG] Stock data loaded: ${successCount} success, ${failCount} failed`);
+
+  // 필터 적용 (데이터가 모두 로드된 후)
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  
+  if (currentFilter === 'rising') {
+    rows.forEach((row) => {
+      const code = row.dataset.stockCode;
+      const stock = stocksTableData.find((s) => s && s.code === code);
+      if (stock && !stock.isPositive) {
+        row.style.display = 'none';
+      } else {
+        row.style.display = '';
+      }
+    });
+  } else if (currentFilter === 'falling') {
+    rows.forEach((row) => {
+      const code = row.dataset.stockCode;
+      const stock = stocksTableData.find((s) => s && s.code === code);
+      if (stock && stock.isPositive) {
+        row.style.display = 'none';
+      } else {
+        row.style.display = '';
+      }
+    });
+  } else {
+    // 'all' 필터 또는 기본값 - 모든 행 표시
+    rows.forEach((row) => {
+      row.style.display = '';
+    });
+  }
 }
 
 // 필터 변경
-function changeFilter(filter) {
+async function changeFilter(filter) {
   currentFilter = filter;
 
   document.querySelectorAll('.filter-btn').forEach((btn) => {
@@ -367,13 +457,11 @@ function changeFilter(filter) {
     }
   });
 
-  renderStocksTable();
+  await renderStocksTable();
 }
 
 // 탭 변경
 function changeTab(tab) {
-  currentTab = tab;
-
   document.querySelectorAll('.tab-btn').forEach((btn) => {
     btn.classList.remove('active');
     if (btn.dataset.tab === tab) {
@@ -387,19 +475,6 @@ function changeTab(tab) {
       content.classList.add('active');
     }
   });
-}
-
-// 전략 상세보기
-function showStrategyDetail() {
-  alert(
-    '평균 회귀 전략 상세 화면\n\n' +
-      '총 투자 원금: ₩10,000,000\n' +
-      '현재 평가 금액: ₩10,500,000\n' +
-      '누적 수익금: ₩500,000\n' +
-      '누적 수익률: +5.00%\n' +
-      '운용 중인 종목 수: 5개\n\n' +
-      '실제 구현 시 별도의 상세 페이지로 이동합니다.'
-  );
 }
 
 // 전략 데이터
@@ -477,10 +552,17 @@ function renderStrategyTable() {
       statusClass = 'status-completed';
     }
 
+    const stockIconHTML = getStockIconHTML(item.name);
+
     row.innerHTML = `
       <td class="col-strategy-name">
-        <div class="strategy-stock-name">${item.name}</div>
-        <div class="strategy-stock-code">${item.code}</div>
+        <div class="stock-info">
+          <div class="stock-icon">${stockIconHTML}</div>
+          <div class="stock-name-group">
+            <div class="stock-name">${item.name}</div>
+            <div class="stock-code-text">${item.code}</div>
+          </div>
+        </div>
       </td>
       <td class="col-buy-price">
         <div class="strategy-price">${
@@ -517,10 +599,8 @@ async function init() {
 
   updateMarketIndices();
 
-  renderStocksTable();
+  await renderStocksTable();
   renderStrategyTable();
-  // renderPopularStocks();
-  // drawSidebarChart();
 
   // 탭 클릭 이벤트
   document.querySelectorAll('.tab-btn').forEach((btn) => {

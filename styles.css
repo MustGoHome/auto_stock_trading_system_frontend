@@ -723,6 +723,15 @@ body {
   color: white;
   font-weight: 700;
   font-size: 12px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.stock-icon-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 6px;
 }
 
 .stock-name-group {
