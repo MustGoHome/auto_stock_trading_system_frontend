@@ -108,30 +108,94 @@ let stocksTableData = [];
 let currentFilter = 'all';
 let currentTab = 'realtime';
 
-// Top 10 종목 리스트 가져오기
+// Top 10 종목 리스트 가져오기 (순위, 종목코드, 종목명 모두 가져오기)
 async function fetchTop10Stocks() {
   try {
+    console.log('[DEBUG] Fetching top 10 stocks from API...');
     const response = await fetch('http://localhost:8000/api/kis-test/rank/');
     if (!response.ok) {
       throw new Error(`[ERROR] fetchTop10Stocks() : ${response.status}`);
     }
     const data = await response.json();
 
+    console.log('[DEBUG] API Response:', data);
+
     if (data == null || !data.rank || !Array.isArray(data.rank)) {
       console.error('[WARNING] Failed to pull top 10 stocks - Invalid response format');
-      return defaultStocksTableData.map((s, index) => ({ rank: index + 1, name: s.name, code: s.code }));
+      return defaultStocksTableData.map((s, index) => ({ 
+        rank: index + 1, 
+        name: s.name, 
+        code: s.code 
+      }));
     }
 
-    // API 응답에서 rank 배열을 순위대로 매핑
+    // API 응답에서 rank 배열의 모든 항목을 순위대로 매핑
     // rank 배열은 이미 순서대로 정렬되어 있으므로 index + 1로 순위 부여
-    return data.rank.map((item, index) => ({
+    const top10Stocks = data.rank.map((item, index) => ({
       rank: index + 1,
-      name: item.name,
-      code: item.code,
+      name: item.name || '',
+      code: item.code || '',
     }));
+
+    console.log('[DEBUG] Mapped top 10 stocks:', top10Stocks);
+    
+    // 모든 종목의 코드와 이름이 있는지 확인
+    const incompleteStocks = top10Stocks.filter(s => !s.code || !s.name);
+    if (incompleteStocks.length > 0) {
+      console.warn('[WARNING] Some stocks missing code or name:', incompleteStocks);
+    }
+
+    return top10Stocks;
   } catch (error) {
     console.error(`[FAIL] Failed to fetch top 10 stocks: ${error}`);
-    return defaultStocksTableData.map((s, index) => ({ rank: index + 1, name: s.name, code: s.code }));
+    return defaultStocksTableData.map((s, index) => ({ 
+      rank: index + 1, 
+      name: s.name, 
+      code: s.code 
+    }));
+  }
+}
+
+// 종목 이름에 따라 아이콘 경로를 반환하는 함수
+function getStockIconPath(stockName) {
+  if (!stockName) return null;
+  
+  // 종목 이름에 키워드가 포함되어 있으면 해당 아이콘 반환
+  if (stockName.includes('삼성')) {
+    return 'icons/삼성.png';
+  } else if (stockName.includes('현대')) {
+    return 'icons/현대.png';
+  } else if (stockName.includes('SK')) {
+    return 'icons/SK.png';
+  } else if (stockName.includes('LG')) {
+    return 'icons/LG.png';
+  } else if (stockName.includes('KB')) {
+    return 'icons/KB.png';
+  } else if (stockName.includes('두산')) {
+    return 'icons/두산.png';
+  } else if (stockName.includes('한화')) {
+    return 'icons/한화.png';
+  } else if (stockName.includes('NAVER') || stockName.includes('네이버')) {
+    return 'icons/네이버.png';
+  } else if (stockName.includes('카카오')) {
+    return 'icons/카카오.png';
+  }
+  
+  // 매칭되는 아이콘이 없으면 null 반환 (기본 아이콘 사용)
+  return null;
+}
+
+// 종목 아이콘 HTML을 생성하는 함수
+function getStockIconHTML(stockName) {
+  const iconPath = getStockIconPath(stockName);
+  
+  if (iconPath) {
+    // 아이콘 이미지 사용
+    return `<img src="${iconPath}" alt="${stockName}" class="stock-icon-image" />`;
+  } else {
+    // 기본 아이콘 (종목명 첫 글자)
+    const stockInitial = stockName ? stockName.substring(0, 1) : '-';
+    return stockInitial;
   }
 }
 
@@ -221,6 +285,8 @@ async function renderStocksTable() {
   // 1단계: Top 10 종목 리스트 먼저 가져오기
   const top10Stocks = await fetchTop10Stocks();
   
+  console.log('[DEBUG] Top 10 stocks fetched:', top10Stocks);
+  
   if (!top10Stocks || top10Stocks.length === 0) {
     console.error('[WARNING] No top 10 stocks found');
     return;
@@ -234,7 +300,7 @@ async function renderStocksTable() {
 
     // API에서 받아온 종목명이 있으면 사용, 없으면 로딩 중 표시
     const stockName = stockInfo.name || '로딩 중...';
-    const stockInitial = stockName !== '로딩 중...' ? stockName.substring(0, 1) : '-';
+    const stockIconHTML = getStockIconHTML(stockName);
 
     // 로딩 상태로 초기 행 생성
     row.innerHTML = `
@@ -243,7 +309,7 @@ async function renderStocksTable() {
       </td>
       <td class="col-name">
         <div class="stock-info">
-          <div class="stock-icon">${stockInitial}</div>
+          <div class="stock-icon">${stockIconHTML}</div>
           <div class="stock-name-group">
             <div class="stock-name">${stockName}</div>
             <div class="stock-code-text">${stockInfo.code}</div>
@@ -267,55 +333,92 @@ async function renderStocksTable() {
     tbody.appendChild(row);
   });
 
-  // 3단계: 각 종목 코드로 개별 데이터 가져와서 행 채우기
+  console.log('[DEBUG] Created', tbody.children.length, 'rows');
+
+  // 3단계: 각 순위의 종목은 자신의 종목 코드로 개별 fetch 요청
+  // Promise.allSettled를 사용하여 일부 실패해도 나머지는 계속 진행
   const stockPromises = top10Stocks.map(async (stockInfo) => {
-    const stockData = await fetchStockData(stockInfo.code);
-    if (!stockData) return;
+    // 각 순위의 종목은 자신의 종목 코드로 fetch 요청
+    const stockCode = stockInfo.code;
+    
+    if (!stockCode) {
+      console.error(`[ERROR] Stock code is missing for rank ${stockInfo.rank}`);
+      return;
+    }
 
-    const row = tbody.querySelector(`tr[data-stock-code="${stockInfo.code}"]`);
-    if (!row) return;
+    try {
+      console.log(`[DEBUG] Fetching data for rank ${stockInfo.rank}, code: ${stockCode}, name: ${stockInfo.name}`);
+      
+      // 자신의 종목 코드로 데이터 가져오기
+      const stockData = await fetchStockData(stockCode);
+      
+      if (!stockData) {
+        console.warn(`[WARNING] No data returned for stock: ${stockCode} (rank: ${stockInfo.rank})`);
+        return;
+      }
 
-    const changeClass = stockData.isPositive ? 'positive' : 'negative';
-    const changeSymbol = stockData.isPositive ? '+' : '';
-    const stockInitial = stockData.name.substring(0, 1);
+      console.log(`[DEBUG] Data fetched for ${stockCode}:`, stockData);
 
-    row.innerHTML = `
-      <td class="col-rank">
-        <span class="stock-rank">${stockInfo.rank}</span>
-      </td>
-      <td class="col-name">
-        <div class="stock-info">
-          <div class="stock-icon">${stockInitial}</div>
-          <div class="stock-name-group">
-            <div class="stock-name">${stockData.name}</div>
-            <div class="stock-code-text">${stockData.code}</div>
+      // 자신의 종목 코드에 해당하는 행 찾기
+      const row = tbody.querySelector(`tr[data-stock-code="${stockCode}"]`);
+      if (!row) {
+        console.error(`[ERROR] Row not found for stock: ${stockCode} (rank: ${stockInfo.rank})`);
+        return;
+      }
+
+      const changeClass = stockData.isPositive ? 'positive' : 'negative';
+      const changeSymbol = stockData.isPositive ? '+' : '';
+      const finalStockName = stockData.name || stockInfo.name || '-';
+      const stockIconHTML = getStockIconHTML(finalStockName);
+
+      // 행 업데이트
+      row.innerHTML = `
+        <td class="col-rank">
+          <span class="stock-rank">${stockInfo.rank}</span>
+        </td>
+        <td class="col-name">
+          <div class="stock-info">
+            <div class="stock-icon">${stockIconHTML}</div>
+            <div class="stock-name-group">
+              <div class="stock-name">${finalStockName}</div>
+              <div class="stock-code-text">${stockData.code || stockCode}</div>
+            </div>
           </div>
-        </div>
-      </td>
-      <td class="col-market-cap">
-        <div class="stock-market-cap">${stockData.marketCap || '-'}</div>
-      </td>
-      <td class="col-price">
-        <div class="stock-price-value">${stockData.price ? stockData.price.toLocaleString() : '-'}</div>
-      </td>
-      <td class="col-change">
-        <div class="stock-change-value ${changeClass}">
-          ${changeSymbol}${Math.abs(stockData.change || 0).toFixed(2)}%
-        </div>
-      </td>
-      <td class="col-volume">
-        <div class="stock-volume">${stockData.volume || '-'}</div>
-      </td>
-    `;
+        </td>
+        <td class="col-market-cap">
+          <div class="stock-market-cap">${stockData.marketCap || '-'}</div>
+        </td>
+        <td class="col-price">
+          <div class="stock-price-value">${stockData.price ? stockData.price.toLocaleString() : '-'}</div>
+        </td>
+        <td class="col-change">
+          <div class="stock-change-value ${changeClass}">
+            ${changeSymbol}${Math.abs(stockData.change || 0).toFixed(2)}%
+          </div>
+        </td>
+        <td class="col-volume">
+          <div class="stock-volume">${stockData.volume || '-'}</div>
+        </td>
+      `;
 
-    // stocksTableData 배열에도 저장 (필터링용)
-    stocksTableData[stockInfo.rank - 1] = {
-      rank: stockInfo.rank,
-      ...stockData,
-    };
+      // stocksTableData 배열에도 저장 (필터링용)
+      stocksTableData[stockInfo.rank - 1] = {
+        rank: stockInfo.rank,
+        ...stockData,
+      };
+
+      console.log(`[DEBUG] Successfully updated row for rank ${stockInfo.rank}, code: ${stockCode}`);
+    } catch (error) {
+      console.error(`[ERROR] Failed to process stock ${stockCode} (rank: ${stockInfo.rank}):`, error);
+    }
   });
 
-  await Promise.all(stockPromises);
+  // Promise.allSettled를 사용하여 일부 실패해도 나머지는 계속 진행
+  const results = await Promise.allSettled(stockPromises);
+  const successCount = results.filter(r => r.status === 'fulfilled').length;
+  const failCount = results.filter(r => r.status === 'rejected').length;
+  
+  console.log(`[DEBUG] Stock data loaded: ${successCount} success, ${failCount} failed`);
 
   // 필터 적용 (데이터가 모두 로드된 후)
   const rows = Array.from(tbody.querySelectorAll('tr'));
@@ -456,10 +559,17 @@ function renderStrategyTable() {
       statusClass = 'status-completed';
     }
 
+    const stockIconHTML = getStockIconHTML(item.name);
+
     row.innerHTML = `
       <td class="col-strategy-name">
-        <div class="strategy-stock-name">${item.name}</div>
-        <div class="strategy-stock-code">${item.code}</div>
+        <div class="stock-info">
+          <div class="stock-icon">${stockIconHTML}</div>
+          <div class="stock-name-group">
+            <div class="stock-name">${item.name}</div>
+            <div class="stock-code-text">${item.code}</div>
+          </div>
+        </div>
       </td>
       <td class="col-buy-price">
         <div class="strategy-price">${

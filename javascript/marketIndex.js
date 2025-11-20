@@ -108,7 +108,6 @@ async function updateMarketIndices() {
       ? 'positive'
       : 'negative';
     const indexSymbol = isPositive(marketIndexData[i].change) ? '+' : '';
-    console.log(indexSymbol);
 
     indexValue.textContent = marketIndexData[i].today.toLocaleString('ko-KR');
     indexChange.textContent = marketIndexData[i].change.toLocaleString('ko-KR');
