@@ -106,7 +106,6 @@ const defaultStocksTableData = [
 let stocksTableData = [];
 
 let currentFilter = 'all';
-let currentTab = 'realtime';
 
 // Top 10 종목 리스트 가져오기 (순위, 종목코드, 종목명 모두 가져오기)
 async function fetchTop10Stocks() {
@@ -228,7 +227,7 @@ function formatVolume(value) {
 }
 
 // 개별 종목 데이터 가져오기
-async function fetchStockData(code) {
+async function fetchStockData(code, stockName = '') {
   try {
     const response = await fetch(`http://127.0.0.1:8000/api/kis-test/price/?codes=${code}`);
     if (!response.ok) {
@@ -238,23 +237,23 @@ async function fetchStockData(code) {
 
     if (data == null || !data.stock || !Array.isArray(data.stock) || data.stock.length === 0) {
       console.error(`[WARNING] Failed to pull stock data for code: ${code} - Invalid response format`);
-      const fallbackData = defaultStocksTableData.find(s => s.code === code);
-      return fallbackData ? {
-        name: fallbackData.name,
-        code: fallbackData.code,
-        price: fallbackData.price,
-        marketCap: fallbackData.marketCap,
-        change: fallbackData.change,
-        volume: fallbackData.volume,
-        isPositive: fallbackData.isPositive,
-      } : null;
+      // 데이터를 불러오지 못한 경우 0으로 고정된 기본값 반환
+      return {
+        name: stockName || '-',
+        code: code,
+        price: 0,
+        marketCap: '0',
+        change: 0,
+        volume: '0',
+        isPositive: false,
+      };
     }
 
     const stockInfo = data.stock[0];
     
     // API 응답 데이터를 테이블 형식에 맞게 변환
     return {
-      name: stockInfo.name || '-',
+      name: stockInfo.name || stockName || '-',
       code: stockInfo.code || code,
       price: stockInfo.currentPrice || 0, // 현재가
       marketCap: formatMarketCap(stockInfo.price), // 시가총액 (price 필드)
@@ -264,16 +263,16 @@ async function fetchStockData(code) {
     };
   } catch (error) {
     console.error(`[FAIL] Failed to fetch stock data for ${code}: ${error}`);
-    const fallbackData = defaultStocksTableData.find(s => s.code === code);
-    return fallbackData ? {
-      name: fallbackData.name,
-      code: fallbackData.code,
-      price: fallbackData.price,
-      marketCap: fallbackData.marketCap,
-      change: fallbackData.change,
-      volume: fallbackData.volume,
-      isPositive: fallbackData.isPositive,
-    } : null;
+    // 데이터를 불러오지 못한 경우 0으로 고정된 기본값 반환
+    return {
+      name: stockName || '-',
+      code: code,
+      price: 0,
+      marketCap: '0',
+      change: 0,
+      volume: '0',
+      isPositive: false,
+    };
   }
 }
 
@@ -349,13 +348,9 @@ async function renderStocksTable() {
     try {
       console.log(`[DEBUG] Fetching data for rank ${stockInfo.rank}, code: ${stockCode}, name: ${stockInfo.name}`);
       
-      // 자신의 종목 코드로 데이터 가져오기
-      const stockData = await fetchStockData(stockCode);
-      
-      if (!stockData) {
-        console.warn(`[WARNING] No data returned for stock: ${stockCode} (rank: ${stockInfo.rank})`);
-        return;
-      }
+      // 자신의 종목 코드로 데이터 가져오기 (종목명도 전달)
+      // fetchStockData는 항상 데이터를 반환하므로 null 체크 불필요
+      const stockData = await fetchStockData(stockCode, stockInfo.name);
 
       console.log(`[DEBUG] Data fetched for ${stockCode}:`, stockData);
 
@@ -386,10 +381,10 @@ async function renderStocksTable() {
           </div>
         </td>
         <td class="col-market-cap">
-          <div class="stock-market-cap">${stockData.marketCap || '-'}</div>
+          <div class="stock-market-cap">${stockData.marketCap || '0'}</div>
         </td>
         <td class="col-price">
-          <div class="stock-price-value">${stockData.price ? stockData.price.toLocaleString() : '-'}</div>
+          <div class="stock-price-value">${stockData.price ? stockData.price.toLocaleString() : '0'}</div>
         </td>
         <td class="col-change">
           <div class="stock-change-value ${changeClass}">
@@ -397,7 +392,7 @@ async function renderStocksTable() {
           </div>
         </td>
         <td class="col-volume">
-          <div class="stock-volume">${stockData.volume || '-'}</div>
+          <div class="stock-volume">${stockData.volume || '0'}</div>
         </td>
       `;
 
@@ -467,8 +462,6 @@ async function changeFilter(filter) {
 
 // 탭 변경
 function changeTab(tab) {
-  currentTab = tab;
-
   document.querySelectorAll('.tab-btn').forEach((btn) => {
     btn.classList.remove('active');
     if (btn.dataset.tab === tab) {
