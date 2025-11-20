@@ -29,7 +29,7 @@ pipeline {
         stage('Restart Apache Process') {
             steps {
 				sh """
-				echo "[ START ] Pacemaker Apache Resource 재기동
+				echo "[ START ] Pacemaker Apache Resource 재기동"
 				sudo pcs resources restart ${PCS_APACHE}
 				"""
             }
