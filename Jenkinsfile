@@ -30,7 +30,7 @@ pipeline {
             steps {
 				sh """
 				echo "[ START ] Pacemaker Apache Resource 재기동"
-				sudo pcs resources restart ${PCS_APACHE}
+				sudo pcs resource restart ${PCS_APACHE}
 				"""
             }
         }
