@@ -5,51 +5,30 @@
 [ GET : ]
 */
 
-// Test JSON
-const temp = {
-  indices: [
-    {
-      name: '달러 환율',
-      yesterday: 1200,
-      today: 1250,
-    },
-    {
-      name: '코스피',
-      yesterday: 2700,
-      today: 2550,
-    },
-    {
-      name: '코스닥',
-      yesterday: 850,
-      today: 870,
-    },
-    {
-      name: '나스닥',
-      yesterday: 15000,
-      today: 15250,
-    },
-  ],
-};
-
+// API 호출 실패 시 반환할 기본값 (0으로 설정)
 const zero = [
   {
     name: '달러 환율',
-    yesterday: 0,
+    change: 0,
+    changePercent: '0.00',
     today: 0,
   },
   {
     name: '코스피',
-    yesterday: 0,
+    change: 0,
+    changePercent: '0.00',
     today: 0,
   },
   {
     name: '코스닥',
-    yesterday: 0,
+    change: 0,
+    changePercent: '0.00',
     today: 0,
   },
   {
     name: '나스닥',
-    yesterday: 0,
+    change: 0,
+    changePercent: '0.00',
     today: 0,
   },
 ];
@@ -57,27 +36,28 @@ const zero = [
 // Django API 호출
 async function fetchMarketIndex() {
   try {
-    // const response = await fetch('http://localhost:8000/api/market/indices/');
-    // console.log('API Response:', response);
-    // if (!response.ok) {
-    //   throw new Error(`[ERROR] fetchMarketIndex() : ${response.status}`);
-    // }
-    // const apiData = await response.json();
+    const response = await fetch('http://localhost:8000/api/kis-test/index/');
+    if (!response.ok) {
+      throw new Error(`[ERROR] fetchMarketIndex() : ${response.status}`);
+    }
+    const data = await response.json();
 
-    // Test JSON
-    const data = temp;
     let responseJSON = [];
 
-    if (data == null) {
-      console.error(`[ WARNING ] Failed to pull data`);
+    if (data == null || !data.indices || !Array.isArray(data.indices)) {
+      console.error(`[ WARNING ] Failed to pull data - Invalid response format`);
       return zero;
     } else {
       for (const item of data.indices) {
         let change = item.today - item.yesterday;
+        // yesterday가 0인 경우 나누기 오류 방지
+        let changePercent = item.yesterday !== 0 
+          ? ((change / item.yesterday) * 100).toFixed(2)
+          : '0.00';
         responseJSON.push({
           name: item.name,
           change: change,
-          changePercent: ((change / item.yesterday) * 100).toFixed(2),
+          changePercent: changePercent,
           today: item.today,
         });
       }
