@@ -477,78 +477,60 @@ function changeTab(tab) {
   });
 }
 
-// 전략 데이터
-const strategyData = [
-  {
-    name: '삼성전자',
-    code: '005930',
-    buyPrice: 71000,
-    sellPrice: 73500,
-    strategy: 'RSI',
-    status: 'selling', // buying, selling, completed
-  },
-  {
-    name: 'SK하이닉스',
-    code: '000660',
-    buyPrice: 140000,
-    sellPrice: 145000,
-    strategy: 'MACD',
-    status: 'completed',
-  },
-  {
-    name: 'NAVER',
-    code: '035420',
-    buyPrice: 195000,
-    sellPrice: null,
-    strategy: 'RSI',
-    status: 'buying',
-  },
-  {
-    name: '카카오',
-    code: '035720',
-    buyPrice: 51000,
-    sellPrice: 52500,
-    strategy: '볼린저밴드',
-    status: 'selling',
-  },
-  {
-    name: 'LG에너지솔루션',
-    code: '373220',
-    buyPrice: 420000,
-    sellPrice: 430000,
-    strategy: '이동평균',
-    status: 'completed',
-  },
-];
+// 전략 현황 데이터 가져오기
+async function fetchStrategyData() {
+  try {
+    const response = await fetch('http://localhost:8000/api/trading/request/');
+    if (!response.ok) {
+      throw new Error(`[ERROR] fetchStrategyData() : ${response.status}`);
+    }
+    const data = await response.json();
+
+    if (data == null || !Array.isArray(data)) {
+      console.error('[WARNING] Failed to pull strategy data - Invalid response format');
+      return [];
+    }
+
+    return data;
+  } catch (error) {
+    console.error(`[FAIL] Failed to fetch strategy data: ${error}`);
+    return [];
+  }
+}
 
 // 전략 현황 테이블 렌더링
-function renderStrategyTable() {
+async function renderStrategyTable() {
   const tbody = document.getElementById('strategyTableBody');
   tbody.innerHTML = '';
+
+  // API에서 데이터 가져오기
+  const strategyData = await fetchStrategyData();
+
+  if (!strategyData || strategyData.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">데이터가 없습니다.</td></tr>';
+    return;
+  }
 
   strategyData.forEach((item) => {
     const row = document.createElement('tr');
 
-    // 갭(%) 계산
+    // 갭(%) 계산: (targetPrice - currentPrice) / currentPrice * 100
     let gap = '-';
     let gapClass = '';
-    if (item.sellPrice && item.buyPrice) {
-      const gapValue = ((item.sellPrice - item.buyPrice) / item.buyPrice) * 100;
+    if (item.targetPrice && item.currentPrice) {
+      const gapValue = ((item.targetPrice - item.currentPrice) / item.currentPrice) * 100;
       gap = `${gapValue >= 0 ? '+' : ''}${gapValue.toFixed(2)}%`;
       gapClass = gapValue >= 0 ? 'positive' : 'negative';
     }
 
     // 진행 상황 텍스트 및 클래스
-    let statusText = '';
+    let statusText = item.status || '-';
     let statusClass = '';
-    if (item.status === 'buying') {
-      statusText = '매수중';
+    if (statusText === '매수중') {
       statusClass = 'status-buying';
-    } else if (item.status === 'selling') {
-      statusText = '매도중';
+    } else if (statusText === '매도중') {
       statusClass = 'status-selling';
-    } else if (item.status === 'completed') {
-      statusText = '거래 완료';
+    } else if (statusText === '거래 완료') {
       statusClass = 'status-completed';
     }
 
@@ -559,23 +541,23 @@ function renderStrategyTable() {
         <div class="stock-info">
           <div class="stock-icon">${stockIconHTML}</div>
           <div class="stock-name-group">
-            <div class="stock-name">${item.name}</div>
-            <div class="stock-code-text">${item.code}</div>
+            <div class="stock-name">${item.name || '-'}</div>
+            <div class="stock-code-text">${item.symbol || '-'}</div>
           </div>
         </div>
       </td>
       <td class="col-buy-price">
         <div class="strategy-price">${
-          item.buyPrice ? item.buyPrice.toLocaleString() : '-'
+          item.currentPrice ? item.currentPrice.toLocaleString() : '-'
         }</div>
       </td>
       <td class="col-sell-price">
         <div class="strategy-price">${
-          item.sellPrice ? item.sellPrice.toLocaleString() : '-'
+          item.targetPrice ? item.targetPrice.toLocaleString() : '-'
         }</div>
       </td>
       <td class="col-strategy-type">
-        <div class="strategy-type-badge strategy-type-badge-${item.strategy.toLowerCase()}">${item.strategy}</div>
+        <div class="strategy-type-badge strategy-type-badge-${(item.strategy || '').toLowerCase()}">${item.strategy || '-'}</div>
       </td>
       <td class="col-gap">
         <div class="strategy-gap ${gapClass}">${gap}</div>
@@ -594,13 +576,13 @@ async function init() {
   updateCurrentTime();
   updateTodayDate();
   updateMarketStatus(); // 시장 상태 초기화
-  setInterval(updateCurrentTime, 60000); // 1분마다 업데이트
+  setInterval(updateCurrentTime, 1000); // 1초마다 업데이트
   setInterval(updateMarketStatus, 60000); // 1분마다 시장 상태 업데이트
 
   updateMarketIndices();
 
   await renderStocksTable();
-  renderStrategyTable();
+  await renderStrategyTable();
 
   // 탭 클릭 이벤트
   document.querySelectorAll('.tab-btn').forEach((btn) => {
@@ -676,13 +658,20 @@ function initOrderForm() {
   });
 
   // 주문 실행 버튼 클릭
-  orderSubmitBtn.addEventListener('click', () => {
-    const orderValue = document.getElementById('orderValue').value;
+  orderSubmitBtn.addEventListener('click', async () => {
+    const orderValue = document.getElementById('orderValue').value.trim();
     const orderQuantity = document.getElementById('orderQuantity').value;
     const orderStrategy = document.getElementById('orderStrategy').value;
 
     if (!orderValue) {
       alert('종목명 또는 종목코드를 입력해주세요.');
+      return;
+    }
+
+    // 입력 값 검증: 영문과 숫자 조합 6자리
+    const orderValuePattern = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6}$/;
+    if (!orderValuePattern.test(orderValue)) {
+      alert('입력 값은 영문과 숫자 조합으로 6자리여야 합니다.');
       return;
     }
 
@@ -696,26 +685,63 @@ function initOrderForm() {
       return;
     }
 
-    // 주문 정보 출력
+    // 최종 확인 단계
     const riskText =
       selectedRisk === 'low' ? '하' : selectedRisk === 'medium' ? '중' : '상';
-    alert(
-      `전략 주문이 접수되었습니다.\n\n` +
-        `종목: ${orderValue}\n` +
-        `수량: ${orderQuantity}\n` +
-        `투자 전략: ${orderStrategy}\n` +
-        `위험도: ${riskText}`
-    );
+    const confirmMessage =
+      `전략 주문을 실행하시겠습니까?\n\n` +
+      `종목: ${orderValue}\n` +
+      `수량: ${orderQuantity}\n` +
+      `투자 전략: ${orderStrategy}\n` +
+      `위험도: ${riskText}`;
 
-    // 폼 초기화
-    document.getElementById('orderValue').value = '';
-    document.getElementById('orderQuantity').value = '';
-    document.getElementById('orderStrategy').value = 'RSI';
-    riskLevelBtns.forEach((b) => b.classList.remove('active'));
-    selectedRisk = null;
+    if (!confirm(confirmMessage)) {
+      return; // 취소를 누르면 주문 실행하지 않음
+    }
 
-    // 폼 닫기
-    closeModal();
+    // API로 주문 전송
+    try {
+      const requestBody = {
+        symbol: orderValue,
+        quantity: parseInt(orderQuantity),
+        strategy: orderStrategy.toLowerCase(),
+        risk: selectedRisk,
+      };
+
+      const response = await fetch('http://localhost:8000/api/trading/request/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        throw new Error(`주문 전송 실패: ${response.status}`);
+      }
+
+      // 주문 실행 확인
+      alert(
+        `전략 주문이 접수되었습니다.\n\n` +
+          `종목: ${orderValue}\n` +
+          `수량: ${orderQuantity}\n` +
+          `투자 전략: ${orderStrategy}\n` +
+          `위험도: ${riskText}`
+      );
+
+      // 폼 초기화
+      document.getElementById('orderValue').value = '';
+      document.getElementById('orderQuantity').value = '';
+      document.getElementById('orderStrategy').value = 'RSI';
+      riskLevelBtns.forEach((b) => b.classList.remove('active'));
+      selectedRisk = null;
+
+      // 폼 닫기
+      closeModal();
+    } catch (error) {
+      console.error('[FAIL] Failed to submit order:', error);
+      alert('주문 전송 중 오류가 발생했습니다. 다시 시도해주세요.');
+    }
   });
 }
 
