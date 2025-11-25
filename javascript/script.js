@@ -668,10 +668,10 @@ function initOrderForm() {
       return;
     }
 
-    // 입력 값 검증: 영문과 숫자 조합 6자리
-    const orderValuePattern = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6}$/;
+    // 입력 값 검증: 숫자 6자리
+    const orderValuePattern = /^\d{6}$/;
     if (!orderValuePattern.test(orderValue)) {
-      alert('입력 값은 영문과 숫자 조합으로 6자리여야 합니다.');
+      alert('종목코드는 숫자 6자리여야 합니다.');
       return;
     }
 
