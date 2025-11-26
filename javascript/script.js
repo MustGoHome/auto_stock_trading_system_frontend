@@ -708,6 +708,11 @@ function initOrderForm() {
         risk: selectedRisk,
       };
 
+      // 디버깅: 전송할 JSON 데이터 확인
+      console.log('[DEBUG] POST Request to /api/trading/request/');
+      console.log('[DEBUG] Request Body:', JSON.stringify(requestBody, null, 2));
+      console.log('[DEBUG] Request URL: http://localhost:8000/api/trading/request/');
+
       const response = await fetch('http://localhost:8000/api/trading/request/', {
         method: 'POST',
         headers: {
@@ -716,9 +721,35 @@ function initOrderForm() {
         body: JSON.stringify(requestBody),
       });
 
-      if (!response.ok) {
-        throw new Error(`주문 전송 실패: ${response.status}`);
+      // 디버깅: 응답 상태 확인
+      console.log('[DEBUG] Response Status:', response.status, response.statusText);
+      console.log('[DEBUG] Response Headers:', Object.fromEntries(response.headers.entries()));
+
+      // 응답 본문 읽기 (성공/실패 모두)
+      let responseData;
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        responseData = await response.json();
+        console.log('[DEBUG] Response Data:', JSON.stringify(responseData, null, 2));
+      } else {
+        const textData = await response.text();
+        console.log('[DEBUG] Response Text:', textData);
+        responseData = { message: textData };
       }
+
+      if (!response.ok) {
+        // 에러 응답의 상세 정보 포함
+        const errorMessage = responseData?.message || responseData?.error || `HTTP ${response.status}`;
+        console.error('[ERROR] POST Request Failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          body: responseData,
+        });
+        throw new Error(`주문 전송 실패 (${response.status}): ${errorMessage}`);
+      }
+
+      // 성공 응답 처리
+      console.log('[SUCCESS] POST Request Successful:', responseData);
 
       // 주문 실행 확인
       alert(
@@ -738,12 +769,115 @@ function initOrderForm() {
 
       // 폼 닫기
       closeModal();
+
+      // 전략 현황 테이블 새로고침
+      await renderStrategyTable();
     } catch (error) {
       console.error('[FAIL] Failed to submit order:', error);
-      alert('주문 전송 중 오류가 발생했습니다. 다시 시도해주세요.');
+      const errorMessage = error.message || '알 수 없는 오류';
+      alert(`주문 전송 중 오류가 발생했습니다.\n\n${errorMessage}\n\n다시 시도해주세요.`);
     }
   });
 }
+
+// POST 요청 검증 함수 (브라우저 콘솔에서 직접 테스트 가능)
+async function testTradingRequest(testData = null) {
+  const defaultTestData = {
+    symbol: '005930',
+    quantity: 10,
+    strategy: 'rsi',
+    risk: 'low',
+  };
+  
+  const requestBody = testData || defaultTestData;
+  
+  console.log('========================================');
+  console.log('[TEST] POST 요청 테스트 시작');
+  console.log('========================================');
+  console.log('[TEST] URL: http://localhost:8000/api/trading/request/');
+  console.log('[TEST] Method: POST');
+  console.log('[TEST] Request Body:', JSON.stringify(requestBody, null, 2));
+  console.log('[TEST] Request Body (raw):', requestBody);
+  
+  try {
+    const startTime = Date.now();
+    
+    const response = await fetch('http://localhost:8000/api/trading/request/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    });
+    
+    const endTime = Date.now();
+    const duration = endTime - startTime;
+    
+    console.log('----------------------------------------');
+    console.log('[TEST] 응답 수신 완료');
+    console.log('[TEST] 응답 시간:', duration + 'ms');
+    console.log('[TEST] Status:', response.status, response.statusText);
+    console.log('[TEST] Status OK:', response.ok);
+    
+    // 응답 헤더 출력
+    console.log('[TEST] Response Headers:');
+    response.headers.forEach((value, key) => {
+      console.log(`  ${key}: ${value}`);
+    });
+    
+    // 응답 본문 읽기
+    let responseData;
+    const contentType = response.headers.get('content-type');
+    console.log('[TEST] Content-Type:', contentType);
+    
+    if (contentType && contentType.includes('application/json')) {
+      responseData = await response.json();
+      console.log('[TEST] Response Data (JSON):', JSON.stringify(responseData, null, 2));
+    } else {
+      const textData = await response.text();
+      console.log('[TEST] Response Data (Text):', textData);
+      try {
+        responseData = JSON.parse(textData);
+        console.log('[TEST] Response Data (Parsed JSON):', JSON.stringify(responseData, null, 2));
+      } catch (e) {
+        responseData = { raw: textData };
+      }
+    }
+    
+    console.log('----------------------------------------');
+    if (response.ok) {
+      console.log('✅ [TEST] 성공: POST 요청이 정상적으로 처리되었습니다.');
+      console.log('[TEST] 응답 데이터:', responseData);
+    } else {
+      console.error('❌ [TEST] 실패: HTTP 상태 코드', response.status);
+      console.error('[TEST] 에러 내용:', responseData);
+    }
+    console.log('========================================');
+    
+    return {
+      success: response.ok,
+      status: response.status,
+      statusText: response.statusText,
+      data: responseData,
+      duration: duration,
+    };
+  } catch (error) {
+    console.error('========================================');
+    console.error('❌ [TEST] 예외 발생:', error);
+    console.error('[TEST] Error Message:', error.message);
+    console.error('[TEST] Error Stack:', error.stack);
+    console.error('========================================');
+    
+    return {
+      success: false,
+      error: error.message,
+      stack: error.stack,
+    };
+  }
+}
+
+// 전역 스코프에 테스트 함수 노출 (브라우저 콘솔에서 testTradingRequest() 호출 가능)
+window.testTradingRequest = testTradingRequest;
 
 // 페이지 로드 시 초기화
 window.addEventListener('DOMContentLoaded', init);
