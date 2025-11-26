@@ -1,37 +1,41 @@
 pipeline {
-    agent { label 'web01.hb05.local' }
-	
-	environment {
+    agent none
+
+    environment {
         PROJECT_DIR = "/data"
-		PCS_APACHE = "ha_apache"
+        PCS_APACHE = "ha_apache"
     }
 
     stages {
-        stage('Remote Github Checkout') {
+        // [단계 1] 파일 배포 (web01, web02 둘 다 실행됨)
+        stage('Deploy to All Nodes') {
             steps {
-				echo "[ START ] Git 저장소에서 코드 가져오기"
-                checkout scm
-            }
-        }
-
-        stage('Deploy to Apache Server') {
-            steps {
-				sh """
-                    echo "[ START ] Workspace의 파일 복사"
-                    sudo cp -r * ${PROJECT_DIR}/
+                script {
+                    // 배포할 서버 목록
+                    def targetNodes = ['web01.hb05.local', 'web02.hb05.local']
                     
-                    echo "[ START ] 배포 디렉터리 권한 수정"
-                    sudo chown -R apache:apache ${PROJECT_DIR}
-                """
+                    targetNodes.each { nodeName ->
+                        node(nodeName) {
+                            echo "--- [ ${nodeName} ] 배포 시작 ---"
+                            checkout scm
+                            sh """
+                                sudo cp -r * ${PROJECT_DIR}/
+                                sudo chown -R apache:apache ${PROJECT_DIR}
+                            """
+                        }
+                    }
+                }
             }
         }
 
-        stage('Restart Apache Process') {
+        // [단계 2] 서비스 재기동 (web01 한 곳에서만 실행)
+        stage('Restart Cluster Resource') {
+            agent { label 'web01.hb05.local' } 
             steps {
-				sh """
-				echo "[ START ] Pacemaker Apache Resource 재기동"
-				sudo pcs resource restart ${PCS_APACHE}
-				"""
+                sh """
+                    echo "--- [ Cluster ] Pacemaker 리소스 재기동 ---"
+                    sudo pcs resource restart ${PCS_APACHE}
+                """
             }
         }
     }
