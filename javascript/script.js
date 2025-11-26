@@ -668,10 +668,11 @@ function initOrderForm() {
       return;
     }
 
-    // 입력 값 검증: 숫자 6자리
-    const orderValuePattern = /^\d{6}$/;
+    // 입력 값 검증: 알파벳과 숫자 조합 (예: AB00035, 005930)
+    // 최소 1자 이상의 알파벳/숫자 조합 허용
+    const orderValuePattern = /^[A-Za-z0-9]{1,}$/;
     if (!orderValuePattern.test(orderValue)) {
-      alert('종목코드는 숫자 6자리여야 합니다.');
+      alert('종목코드는 알파벳과 숫자로만 입력 가능합니다.');
       return;
     }
 
