@@ -779,6 +779,7 @@ body {
 .stock-volume {
   font-size: 14px;
   color: #666;
+  font-weight: 600;
 }
 
 .table-chart-container {

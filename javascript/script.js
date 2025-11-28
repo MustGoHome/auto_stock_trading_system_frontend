@@ -199,31 +199,39 @@ function getStockIconHTML(stockName) {
 }
 
 // 숫자를 억 단위로 포맷팅하는 함수 (시가총액용)
+// 모든 값을 억(원화) 단위로 표시
 function formatMarketCap(value) {
   if (!value || value === 0) return '-';
-  const billion = Math.floor(value / 100000000); // 억 단위
+  const billion = value / 100000000; // 억 단위 (소수점 포함)
   
-  if (billion >= 1) {
-    // 억 단위로 표현 (예: 420,000억)
-    return `${billion.toLocaleString()}억`;
-  }
-  // 억 단위 미만인 경우 만 단위로 표현
-  const million = Math.floor(value / 10000);
-  return `${million.toLocaleString()}만`;
+  // 소수점 2자리까지 표시하되, 불필요한 0 제거
+  let formatted = billion.toFixed(2);
+  formatted = formatted.replace(/\.0+$/, '').replace(/\.(\d)0$/, '.$1'); // 불필요한 0 제거
+  
+  // 천 단위 구분자 추가를 위해 숫자와 소수점 부분 분리
+  const parts = formatted.split('.');
+  const integerPart = parseInt(parts[0]).toLocaleString('ko-KR');
+  const decimalPart = parts[1];
+  
+  return decimalPart ? `${integerPart}.${decimalPart}억` : `${integerPart}억`;
 }
 
 // 거래대금을 포맷팅하는 함수
+// 모든 값을 억(원화) 단위로 표시
 function formatVolume(value) {
   if (!value || value === 0) return '-';
-  const billion = Math.floor(value / 100000000); // 억 단위
+  const billion = value / 100000000; // 억 단위 (소수점 포함)
   
-  if (billion >= 1) {
-    // 억 단위로 표현 (예: 135억)
-    return `${billion.toLocaleString()}억`;
-  }
-  // 억 단위 미만인 경우 만 단위로 표현
-  const million = Math.floor(value / 10000);
-  return `${million.toLocaleString()}만`;
+  // 소수점 2자리까지 표시하되, 불필요한 0 제거
+  let formatted = billion.toFixed(2);
+  formatted = formatted.replace(/\.0+$/, '').replace(/\.(\d)0$/, '.$1'); // 불필요한 0 제거
+  
+  // 천 단위 구분자 추가를 위해 숫자와 소수점 부분 분리
+  const parts = formatted.split('.');
+  const integerPart = parseInt(parts[0]).toLocaleString('ko-KR');
+  const decimalPart = parts[1];
+  
+  return decimalPart ? `${integerPart}.${decimalPart}억` : `${integerPart}억`;
 }
 
 // 개별 종목 데이터 가져오기
