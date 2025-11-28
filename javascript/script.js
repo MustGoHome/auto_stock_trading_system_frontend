@@ -160,7 +160,11 @@ function getStockIconPath(stockName) {
   if (!stockName) return null;
   
   // 종목 이름에 키워드가 포함되어 있으면 해당 아이콘 반환
-  if (stockName.includes('삼성')) {
+  // 더 구체적인 매칭을 먼저 처리 (예: 기아가 현대보다 먼저)
+  
+  if (stockName.includes('기아')) {
+    return 'icons/기아.png';
+  } else if (stockName.includes('삼성')) {
     return 'icons/삼성.png';
   } else if (stockName.includes('현대')) {
     return 'icons/현대.png';
