@@ -85,9 +85,11 @@ async function updateMarketIndices() {
   // 각 데이터를 이름으로 찾아서 올바른 위치의 HTML 요소에 매칭
   for (const data of marketIndexData) {
     // id 속성을 통해 해당 지수의 요소 찾기 (예: index-코스피)
-    const indexElement = document.getElementById(`index-${data.name}`);
+    // API 응답의 name이 공백을 포함할 수 있으므로 하이픈으로 변환 (예: "달러 환율" → "달러-환율")
+    const idName = data.name.replace(/\s+/g, '-');
+    const indexElement = document.getElementById(`index-${idName}`);
     if (!indexElement) {
-      console.warn(`[WARNING] Index element not found for: ${data.name}`);
+      console.warn(`[WARNING] Index element not found for: ${data.name} (searched as index-${idName})`);
       continue;
     }
 
