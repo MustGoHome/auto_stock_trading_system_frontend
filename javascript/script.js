@@ -199,17 +199,13 @@ function getStockIconHTML(stockName) {
 }
 
 // 숫자를 억 단위로 포맷팅하는 함수 (시가총액용)
-// 모든 값을 억(원화) 단위로 표시
+// JSON 응답 값이 이미 억 단위이므로 단위 변환 없이 표시만 처리
 function formatMarketCap(value) {
   if (!value || value === 0) return '-';
-  const billion = value / 100000000; // 억 단위 (소수점 포함)
   
-  // 소수점 2자리까지 표시하되, 불필요한 0 제거
-  let formatted = billion.toFixed(2);
-  formatted = formatted.replace(/\.0+$/, '').replace(/\.(\d)0$/, '.$1'); // 불필요한 0 제거
-  
-  // 천 단위 구분자 추가를 위해 숫자와 소수점 부분 분리
-  const parts = formatted.split('.');
+  // 값이 이미 억 단위이므로 숫자와 소수점 부분 분리하여 천 단위 구분자 추가
+  const numValue = typeof value === 'string' ? parseFloat(value) : value;
+  const parts = numValue.toString().split('.');
   const integerPart = parseInt(parts[0]).toLocaleString('ko-KR');
   const decimalPart = parts[1];
   
@@ -217,17 +213,13 @@ function formatMarketCap(value) {
 }
 
 // 거래대금을 포맷팅하는 함수
-// 모든 값을 억(원화) 단위로 표시
+// JSON 응답 값이 이미 억 단위이므로 단위 변환 없이 표시만 처리
 function formatVolume(value) {
   if (!value || value === 0) return '-';
-  const billion = value / 100000000; // 억 단위 (소수점 포함)
   
-  // 소수점 2자리까지 표시하되, 불필요한 0 제거
-  let formatted = billion.toFixed(2);
-  formatted = formatted.replace(/\.0+$/, '').replace(/\.(\d)0$/, '.$1'); // 불필요한 0 제거
-  
-  // 천 단위 구분자 추가를 위해 숫자와 소수점 부분 분리
-  const parts = formatted.split('.');
+  // 값이 이미 억 단위이므로 숫자와 소수점 부분 분리하여 천 단위 구분자 추가
+  const numValue = typeof value === 'string' ? parseFloat(value) : value;
+  const parts = numValue.toString().split('.');
   const integerPart = parseInt(parts[0]).toLocaleString('ko-KR');
   const decimalPart = parts[1];
   
