@@ -111,7 +111,7 @@ let currentFilter = 'all';
 async function fetchTop10Stocks() {
   try {
     console.log('[DEBUG] Fetching top 10 stocks from API...');
-    const response = await fetch('http://localhost:8000/api/kis-test/rank/');
+    const response = await fetch('http://172.16.6.123:8000/api/kis-test/rank/');
     if (!response.ok) {
       throw new Error(`[ERROR] fetchTop10Stocks() : ${response.status}`);
     }
@@ -229,7 +229,7 @@ function formatVolume(value) {
 // 개별 종목 데이터 가져오기
 async function fetchStockData(code, stockName = '') {
   try {
-    const response = await fetch(`http://127.0.0.1:8000/api/kis-test/price/?codes=${code}`);
+    const response = await fetch(`http://172.16.6.123:8000/api/kis-test/price/?codes=${code}`);
     if (!response.ok) {
       throw new Error(`[ERROR] fetchStockData() : ${response.status}`);
     }
@@ -480,7 +480,7 @@ function changeTab(tab) {
 // 전략 현황 데이터 가져오기
 async function fetchStrategyData() {
   try {
-    const response = await fetch('http://localhost:8000/api/trading/request/');
+    const response = await fetch('http://172.16.6.123:8000/api/trading/request/');
     if (!response.ok) {
       throw new Error(`[ERROR] fetchStrategyData() : ${response.status}`);
     }
@@ -712,9 +712,9 @@ function initOrderForm() {
       // 디버깅: 전송할 JSON 데이터 확인
       console.log('[DEBUG] POST Request to /api/trading/request/');
       console.log('[DEBUG] Request Body:', JSON.stringify(requestBody, null, 2));
-      console.log('[DEBUG] Request URL: http://localhost:8000/api/trading/request/');
+      console.log('[DEBUG] Request URL: http://172.16.6.123:8000/api/trading/request/');
 
-      const response = await fetch('http://localhost:8000/api/trading/request/', {
+      const response = await fetch('http://172.16.6.123:8000/api/trading/request/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -780,105 +780,6 @@ function initOrderForm() {
     }
   });
 }
-
-// POST 요청 검증 함수 (브라우저 콘솔에서 직접 테스트 가능)
-async function testTradingRequest(testData = null) {
-  const defaultTestData = {
-    symbol: '005930',
-    quantity: 10,
-    strategy: 'rsi',
-    risk: 'low',
-  };
-  
-  const requestBody = testData || defaultTestData;
-  
-  console.log('========================================');
-  console.log('[TEST] POST 요청 테스트 시작');
-  console.log('========================================');
-  console.log('[TEST] URL: http://localhost:8000/api/trading/request/');
-  console.log('[TEST] Method: POST');
-  console.log('[TEST] Request Body:', JSON.stringify(requestBody, null, 2));
-  console.log('[TEST] Request Body (raw):', requestBody);
-  
-  try {
-    const startTime = Date.now();
-    
-    const response = await fetch('http://localhost:8000/api/trading/request/', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(requestBody),
-    });
-    
-    const endTime = Date.now();
-    const duration = endTime - startTime;
-    
-    console.log('----------------------------------------');
-    console.log('[TEST] 응답 수신 완료');
-    console.log('[TEST] 응답 시간:', duration + 'ms');
-    console.log('[TEST] Status:', response.status, response.statusText);
-    console.log('[TEST] Status OK:', response.ok);
-    
-    // 응답 헤더 출력
-    console.log('[TEST] Response Headers:');
-    response.headers.forEach((value, key) => {
-      console.log(`  ${key}: ${value}`);
-    });
-    
-    // 응답 본문 읽기
-    let responseData;
-    const contentType = response.headers.get('content-type');
-    console.log('[TEST] Content-Type:', contentType);
-    
-    if (contentType && contentType.includes('application/json')) {
-      responseData = await response.json();
-      console.log('[TEST] Response Data (JSON):', JSON.stringify(responseData, null, 2));
-    } else {
-      const textData = await response.text();
-      console.log('[TEST] Response Data (Text):', textData);
-      try {
-        responseData = JSON.parse(textData);
-        console.log('[TEST] Response Data (Parsed JSON):', JSON.stringify(responseData, null, 2));
-      } catch (e) {
-        responseData = { raw: textData };
-      }
-    }
-    
-    console.log('----------------------------------------');
-    if (response.ok) {
-      console.log('✅ [TEST] 성공: POST 요청이 정상적으로 처리되었습니다.');
-      console.log('[TEST] 응답 데이터:', responseData);
-    } else {
-      console.error('❌ [TEST] 실패: HTTP 상태 코드', response.status);
-      console.error('[TEST] 에러 내용:', responseData);
-    }
-    console.log('========================================');
-    
-    return {
-      success: response.ok,
-      status: response.status,
-      statusText: response.statusText,
-      data: responseData,
-      duration: duration,
-    };
-  } catch (error) {
-    console.error('========================================');
-    console.error('❌ [TEST] 예외 발생:', error);
-    console.error('[TEST] Error Message:', error.message);
-    console.error('[TEST] Error Stack:', error.stack);
-    console.error('========================================');
-    
-    return {
-      success: false,
-      error: error.message,
-      stack: error.stack,
-    };
-  }
-}
-
-// 전역 스코프에 테스트 함수 노출 (브라우저 콘솔에서 testTradingRequest() 호출 가능)
-window.testTradingRequest = testTradingRequest;
 
 // 페이지 로드 시 초기화
 window.addEventListener('DOMContentLoaded', init);
