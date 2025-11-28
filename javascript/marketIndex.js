@@ -6,13 +6,8 @@
 */
 
 // API 호출 실패 시 반환할 기본값 (0으로 설정)
+// API 응답 순서: 코스피, 코스닥, 달러 환율, 나스닥
 const zero = [
-  {
-    name: '달러 환율',
-    change: 0,
-    changePercent: '0.00',
-    today: 0,
-  },
   {
     name: '코스피',
     change: 0,
@@ -21,6 +16,12 @@ const zero = [
   },
   {
     name: '코스닥',
+    change: 0,
+    changePercent: '0.00',
+    today: 0,
+  },
+  {
+    name: '달러 환율',
     change: 0,
     changePercent: '0.00',
     today: 0,
@@ -79,25 +80,35 @@ function isPositive(number) {
 // 시장 지수 업데이트
 async function updateMarketIndices() {
   const marketIndexData = await fetchMarketIndex();
-  const indexItemArray = document.getElementsByClassName('index-item');
 
-  for (let i = 0; i < indexItemArray.length; i++) {
-    const indexValue = indexItemArray[i].querySelector('.index-value');
-    const indexChange = indexItemArray[i].querySelector('.index-change');
-    const indexPositive = isPositive(marketIndexData[i].change)
-      ? 'positive'
-      : 'negative';
-    const indexSymbol = isPositive(marketIndexData[i].change) ? '+' : '';
+  // API 응답 순서: 코스피, 코스닥, 달러 환율, 나스닥
+  // 각 데이터를 이름으로 찾아서 올바른 위치의 HTML 요소에 매칭
+  for (const data of marketIndexData) {
+    // id 속성을 통해 해당 지수의 요소 찾기 (예: index-코스피)
+    const indexElement = document.getElementById(`index-${data.name}`);
+    if (!indexElement) {
+      console.warn(`[WARNING] Index element not found for: ${data.name}`);
+      continue;
+    }
 
-    indexValue.textContent = marketIndexData[i].today.toLocaleString('ko-KR');
-    indexChange.textContent = marketIndexData[i].change.toLocaleString('ko-KR');
+    const indexValue = indexElement.querySelector('.index-value');
+    const indexChange = indexElement.querySelector('.index-change');
+    
+    if (!indexValue || !indexChange) {
+      console.warn(`[WARNING] Index value/change elements not found for: ${data.name}`);
+      continue;
+    }
+
+    const indexPositive = isPositive(data.change) ? 'positive' : 'negative';
+    const indexSymbol = isPositive(data.change) ? '+' : '';
+
+    indexValue.textContent = data.today.toLocaleString('ko-KR');
+    indexChange.textContent = data.change.toLocaleString('ko-KR');
 
     indexChange.className = `index-change ${indexPositive}`;
     indexChange.innerHTML = `
-            <span>${indexSymbol}${marketIndexData[i].change.toLocaleString(
-      'ko-KR'
-    )}</sapn>
-            <span>(${indexSymbol}${marketIndexData[i].changePercent}%)</sapn>
+            <span>${indexSymbol}${data.change.toLocaleString('ko-KR')}</span>
+            <span>(${indexSymbol}${data.changePercent}%)</span>
         `;
   }
 }
