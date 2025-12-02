@@ -111,7 +111,7 @@ let currentFilter = 'all';
 async function fetchTop10Stocks() {
   try {
     console.log('[DEBUG] Fetching top 10 stocks from API...');
-    const response = await fetch('http://172.16.6.123:8000/api/kis-test/rank/');
+    const response = await fetch('http://172.16.6.123:8000/api/data/rank/');
     if (!response.ok) {
       throw new Error(`[ERROR] fetchTop10Stocks() : ${response.status}`);
     }
@@ -233,7 +233,7 @@ function formatVolume(value) {
 // 개별 종목 데이터 가져오기
 async function fetchStockData(code, stockName = '') {
   try {
-    const response = await fetch(`http://172.16.6.123:8000/api/kis-test/price/?codes=${code}`);
+    const response = await fetch(`http://172.16.6.123:8000/api/data/price/?codes=${code}`);
     if (!response.ok) {
       throw new Error(`[ERROR] fetchStockData() : ${response.status}`);
     }
@@ -521,7 +521,7 @@ async function renderStrategyTable() {
     // 갭(%) 계산: (targetPrice - currentPrice) / currentPrice * 100
     let gap = '-';
     let gapClass = '';
-    if (item.targetPrice && item.currentPrice) {
+    if (item.targetPrice != null && item.currentPrice != null && item.currentPrice !== 0) {
       const gapValue = ((item.targetPrice - item.currentPrice) / item.currentPrice) * 100;
       gap = `${gapValue >= 0 ? '+' : ''}${gapValue.toFixed(2)}%`;
       gapClass = gapValue >= 0 ? 'positive' : 'negative';
@@ -534,9 +534,23 @@ async function renderStrategyTable() {
       statusClass = 'status-buying';
     } else if (statusText === '매도중') {
       statusClass = 'status-selling';
-    } else if (statusText === '거래 완료') {
+    } else if (statusText === '거래 완료' || statusText === '완료') {
       statusClass = 'status-completed';
     }
+
+    // 가격 포맷팅 함수 (소수점 처리)
+    const formatPrice = (price) => {
+      if (price == null || price === 0) return '-';
+      // 소수점이 있으면 소수점 포함, 없으면 정수로 표시
+      const numPrice = typeof price === 'string' ? parseFloat(price) : price;
+      if (numPrice % 1 === 0) {
+        return numPrice.toLocaleString('ko-KR');
+      }
+      return numPrice.toLocaleString('ko-KR', { 
+        minimumFractionDigits: 0, 
+        maximumFractionDigits: 2 
+      });
+    };
 
     const stockIconHTML = getStockIconHTML(item.name);
 
@@ -551,14 +565,10 @@ async function renderStrategyTable() {
         </div>
       </td>
       <td class="col-buy-price">
-        <div class="strategy-price">${
-          item.currentPrice ? item.currentPrice.toLocaleString() : '-'
-        }</div>
+        <div class="strategy-price">${formatPrice(item.currentPrice)}</div>
       </td>
       <td class="col-sell-price">
-        <div class="strategy-price">${
-          item.targetPrice ? item.targetPrice.toLocaleString() : '-'
-        }</div>
+        <div class="strategy-price">${formatPrice(item.targetPrice)}</div>
       </td>
       <td class="col-strategy-type">
         <div class="strategy-type-badge strategy-type-badge-${(item.strategy || '').toLowerCase()}">${item.strategy || '-'}</div>
@@ -665,6 +675,7 @@ function initOrderForm() {
   orderSubmitBtn.addEventListener('click', async () => {
     const orderValue = document.getElementById('orderValue').value.trim();
     const orderQuantity = document.getElementById('orderQuantity').value;
+    const orderTargetProfit = document.getElementById('orderTargetProfit').value;
     const orderStrategy = document.getElementById('orderStrategy').value;
 
     if (!orderValue) {
@@ -685,6 +696,11 @@ function initOrderForm() {
       return;
     }
 
+    if (!orderTargetProfit || orderTargetProfit <= 0) {
+      alert('목표 수익률을 입력해주세요.');
+      return;
+    }
+
     if (!selectedRisk) {
       alert('위험도를 선택해주세요.');
       return;
@@ -692,11 +708,12 @@ function initOrderForm() {
 
     // 최종 확인 단계
     const riskText =
-      selectedRisk === 'low' ? '하' : selectedRisk === 'medium' ? '중' : '상';
+      selectedRisk === 'low' ? '하' : selectedRisk === 'mid' ? '중' : '상';
     const confirmMessage =
       `전략 주문을 실행하시겠습니까?\n\n` +
       `종목: ${orderValue}\n` +
       `수량: ${orderQuantity}\n` +
+      `목표 수익률: ${orderTargetProfit}%\n` +
       `투자 전략: ${orderStrategy}\n` +
       `위험도: ${riskText}`;
 
@@ -709,6 +726,7 @@ function initOrderForm() {
       const requestBody = {
         symbol: orderValue,
         quantity: parseInt(orderQuantity),
+        target_profit: parseFloat(orderTargetProfit),
         strategy: orderStrategy.toLowerCase(),
         risk: selectedRisk,
       };
@@ -757,10 +775,12 @@ function initOrderForm() {
       console.log('[SUCCESS] POST Request Successful:', responseData);
 
       // 주문 실행 확인
+      const successMessage = responseData?.message || '전략 주문이 접수되었습니다.';
       alert(
-        `전략 주문이 접수되었습니다.\n\n` +
+        `${successMessage}\n\n` +
           `종목: ${orderValue}\n` +
           `수량: ${orderQuantity}\n` +
+          `목표 수익률: ${orderTargetProfit}%\n` +
           `투자 전략: ${orderStrategy}\n` +
           `위험도: ${riskText}`
       );
@@ -768,6 +788,7 @@ function initOrderForm() {
       // 폼 초기화
       document.getElementById('orderValue').value = '';
       document.getElementById('orderQuantity').value = '';
+      document.getElementById('orderTargetProfit').value = '';
       document.getElementById('orderStrategy').value = 'RSI';
       riskLevelBtns.forEach((b) => b.classList.remove('active'));
       selectedRisk = null;

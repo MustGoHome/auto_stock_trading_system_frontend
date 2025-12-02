@@ -37,7 +37,7 @@ const zero = [
 // Django API 호출
 async function fetchMarketIndex() {
   try {
-    const response = await fetch('http://172.16.6.123:8000/api/kis-test/index/');
+    const response = await fetch('http://172.16.6.123:8000/api/data/index/');
     if (!response.ok) {
       throw new Error(`[ERROR] fetchMarketIndex() : ${response.status}`);
     }

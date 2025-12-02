@@ -139,6 +139,17 @@
                   />
                 </div>
                 <div class="form-group">
+                  <label for="orderTargetProfit">목표 수익률 (%)</label>
+                  <input
+                    type="number"
+                    id="orderTargetProfit"
+                    placeholder="목표 수익률 입력"
+                    class="form-input"
+                    min="0"
+                    step="0.1"
+                  />
+                </div>
+                <div class="form-group">
                   <label for="orderStrategy">투자 전략</label>
                   <select id="orderStrategy" class="form-select">
                     <option value="RSI">RSI</option>
@@ -151,7 +162,7 @@
                   <label>위험도</label>
                   <div class="risk-level-group">
                     <button class="risk-level-btn" data-risk="low">하</button>
-                    <button class="risk-level-btn" data-risk="medium">
+                    <button class="risk-level-btn" data-risk="mid">
                       중
                     </button>
                     <button class="risk-level-btn" data-risk="high">상</button>
