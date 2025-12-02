@@ -515,14 +515,42 @@ async function renderStrategyTable() {
     return;
   }
 
+  // 가격 포맷팅 함수 (소수점 처리)
+  const formatPrice = (price) => {
+    if (price == null || price === 0) return '-';
+    // 소수점이 있으면 소수점 포함, 없으면 정수로 표시
+    const numPrice = typeof price === 'string' ? parseFloat(price) : price;
+    if (numPrice % 1 === 0) {
+      return numPrice.toLocaleString('ko-KR');
+    }
+    return numPrice.toLocaleString('ko-KR', { 
+      minimumFractionDigits: 0, 
+      maximumFractionDigits: 2 
+    });
+  };
+
   strategyData.forEach((item) => {
     const row = document.createElement('tr');
 
-    // 갭(%) 계산: (targetPrice - currentPrice) / currentPrice * 100
+    // executions 배열에서 매수/매도 체결가 추출
+    let buyPrice = null;
+    let sellPrice = null;
+    
+    if (item.executions && Array.isArray(item.executions)) {
+      item.executions.forEach((execution) => {
+        if (execution.side === 'BUY') {
+          buyPrice = execution.price;
+        } else if (execution.side === 'SELL') {
+          sellPrice = execution.price;
+        }
+      });
+    }
+
+    // 갭(%) - API에서 직접 제공
     let gap = '-';
     let gapClass = '';
-    if (item.targetPrice != null && item.currentPrice != null && item.currentPrice !== 0) {
-      const gapValue = ((item.targetPrice - item.currentPrice) / item.currentPrice) * 100;
+    if (item.gap != null) {
+      const gapValue = item.gap;
       gap = `${gapValue >= 0 ? '+' : ''}${gapValue.toFixed(2)}%`;
       gapClass = gapValue >= 0 ? 'positive' : 'negative';
     }
@@ -530,27 +558,22 @@ async function renderStrategyTable() {
     // 진행 상황 텍스트 및 클래스
     let statusText = item.status || '-';
     let statusClass = '';
-    if (statusText === '매수중') {
+    
+    // 상태를 한국어로 변환
+    if (statusText.includes('BUY')) {
+      statusText = '매수중';
       statusClass = 'status-buying';
-    } else if (statusText === '매도중') {
+    } else if (statusText.includes('SELL')) {
+      if (statusText.includes('PENDING')) {
+        statusText = '매도 대기중';
+      } else {
+        statusText = '매도중';
+      }
       statusClass = 'status-selling';
-    } else if (statusText === '거래 완료' || statusText === '완료') {
+    } else if (statusText.includes('COMPLETED') || statusText.includes('완료')) {
+      statusText = '거래 완료';
       statusClass = 'status-completed';
     }
-
-    // 가격 포맷팅 함수 (소수점 처리)
-    const formatPrice = (price) => {
-      if (price == null || price === 0) return '-';
-      // 소수점이 있으면 소수점 포함, 없으면 정수로 표시
-      const numPrice = typeof price === 'string' ? parseFloat(price) : price;
-      if (numPrice % 1 === 0) {
-        return numPrice.toLocaleString('ko-KR');
-      }
-      return numPrice.toLocaleString('ko-KR', { 
-        minimumFractionDigits: 0, 
-        maximumFractionDigits: 2 
-      });
-    };
 
     const stockIconHTML = getStockIconHTML(item.name);
 
@@ -565,10 +588,10 @@ async function renderStrategyTable() {
         </div>
       </td>
       <td class="col-buy-price">
-        <div class="strategy-price">${formatPrice(item.currentPrice)}</div>
+        <div class="strategy-price">${formatPrice(buyPrice)}</div>
       </td>
       <td class="col-sell-price">
-        <div class="strategy-price">${formatPrice(item.targetPrice)}</div>
+        <div class="strategy-price">${formatPrice(sellPrice)}</div>
       </td>
       <td class="col-strategy-type">
         <div class="strategy-type-badge strategy-type-badge-${(item.strategy || '').toLowerCase()}">${item.strategy || '-'}</div>
