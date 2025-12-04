@@ -510,6 +510,8 @@ async function renderStrategyTable() {
   // API에서 데이터 가져오기
   const strategyData = await fetchStrategyData();
 
+  console.log('[DEBUG] Strategy Data:', strategyData);
+
   if (!strategyData || strategyData.length === 0) {
     tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px;">데이터가 없습니다.</td></tr>';
     return;
@@ -536,6 +538,14 @@ async function renderStrategyTable() {
 
   strategyData.forEach((item) => {
     const row = document.createElement('tr');
+
+    console.log('[DEBUG] Processing item:', {
+      symbol: item.symbol,
+      name: item.name,
+      quantity: item.quantity,
+      status: item.status,
+      gap: item.gap
+    });
 
     // executions 배열에서 매수/매도 체결가 추출
     let buyPrice = null;
@@ -616,7 +626,7 @@ async function renderStrategyTable() {
         <div class="strategy-price">${formatPrice(sellPrice)}</div>
       </td>
       <td class="col-quantity">
-        <div class="strategy-quantity">${item.quantity || '-'}</div>
+        <div class="strategy-quantity">${item.quantity != null ? item.quantity : '-'}</div>
       </td>
       <td class="col-strategy-type">
         <div class="strategy-type-badge strategy-type-badge-${(item.strategy || '').toLowerCase()}">${item.strategy || '-'}</div>
