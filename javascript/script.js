@@ -561,6 +561,13 @@ async function renderStrategyTable() {
       });
     }
 
+    console.log('[DEBUG] Executions for', item.name, ':', {
+      executions: item.executions,
+      buyPrice,
+      sellPrice,
+      status: item.status
+    });
+
     // 갭(%) - API에서 직접 제공
     let gap = '-';
     let gapClass = '';

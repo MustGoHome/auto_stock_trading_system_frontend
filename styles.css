@@ -834,37 +834,37 @@ body {
 }
 
 .col-strategy-name {
-  width: 200px;
+  width: 22%;
   text-align: left !important;
 }
 
 .col-buy-price {
-  width: 150px;
+  width: 13%;
   text-align: right !important;
 }
 
 .col-sell-price {
-  width: 150px;
+  width: 13%;
   text-align: right !important;
 }
 
 .col-quantity {
-  width: 80px;
+  width: 8%;
   text-align: center !important;
 }
 
 .col-strategy-type {
-  width: 120px;
+  width: 12%;
   text-align: center !important;
 }
 
 .col-gap {
-  width: 120px;
+  width: 12%;
   text-align: right !important;
 }
 
 .col-status {
-  width: 150px;
+  width: 20%;
   text-align: center !important;
 }
 
