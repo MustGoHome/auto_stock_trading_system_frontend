@@ -511,7 +511,7 @@ async function renderStrategyTable() {
   const strategyData = await fetchStrategyData();
 
   if (!strategyData || strategyData.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">데이터가 없습니다.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px;">데이터가 없습니다.</td></tr>';
     return;
   }
 
@@ -528,6 +528,11 @@ async function renderStrategyTable() {
       maximumFractionDigits: 2 
     });
   };
+
+  // 완료된 거래 통계를 위한 변수
+  let completedTrades = 0;
+  let totalProfit = 0;
+  let totalProfitRate = 0;
 
   strategyData.forEach((item) => {
     const row = document.createElement('tr');
@@ -558,6 +563,7 @@ async function renderStrategyTable() {
     // 진행 상황 텍스트 및 클래스
     let statusText = item.status || '-';
     let statusClass = '';
+    let isCompleted = false;
     
     // 상태를 한국어로 변환
     if (statusText.includes('BUY')) {
@@ -566,13 +572,29 @@ async function renderStrategyTable() {
     } else if (statusText.includes('SELL')) {
       if (statusText.includes('PENDING')) {
         statusText = '매도 대기중';
+      } else if (statusText.includes('DONE')) {
+        statusText = '거래 완료';
+        statusClass = 'status-completed';
+        isCompleted = true;
       } else {
         statusText = '매도중';
       }
-      statusClass = 'status-selling';
+      statusClass = statusClass || 'status-selling';
     } else if (statusText.includes('COMPLETED') || statusText.includes('완료')) {
       statusText = '거래 완료';
       statusClass = 'status-completed';
+      isCompleted = true;
+    }
+
+    // 완료된 거래의 수익률 계산
+    if (isCompleted && buyPrice != null && sellPrice != null && buyPrice !== 0) {
+      const quantity = item.quantity || 1;
+      const profit = (sellPrice - buyPrice) * quantity;
+      const profitRate = ((sellPrice - buyPrice) / buyPrice) * 100;
+      
+      completedTrades++;
+      totalProfit += profit;
+      totalProfitRate += profitRate;
     }
 
     const stockIconHTML = getStockIconHTML(item.name);
@@ -593,6 +615,9 @@ async function renderStrategyTable() {
       <td class="col-sell-price">
         <div class="strategy-price">${formatPrice(sellPrice)}</div>
       </td>
+      <td class="col-quantity">
+        <div class="strategy-quantity">${item.quantity || '-'}</div>
+      </td>
       <td class="col-strategy-type">
         <div class="strategy-type-badge strategy-type-badge-${(item.strategy || '').toLowerCase()}">${item.strategy || '-'}</div>
       </td>
@@ -606,6 +631,36 @@ async function renderStrategyTable() {
 
     tbody.appendChild(row);
   });
+
+  // 완료된 거래가 있으면 요약 행 추가
+  if (completedTrades > 0) {
+    const avgProfitRate = totalProfitRate / completedTrades;
+    const profitClass = totalProfit >= 0 ? 'positive' : 'negative';
+    const profitSymbol = totalProfit >= 0 ? '+' : '';
+    
+    const summaryRow = document.createElement('tr');
+    summaryRow.className = 'strategy-summary-row';
+    summaryRow.innerHTML = `
+      <td colspan="3" class="summary-label">
+        <div class="summary-text">완료된 거래 수익 현황</div>
+      </td>
+      <td class="summary-count">
+        <div class="summary-value">${completedTrades}건</div>
+      </td>
+      <td colspan="2" class="summary-profit">
+        <div class="summary-profit-value ${profitClass}">
+          ${profitSymbol}${totalProfit.toLocaleString('ko-KR')}원
+        </div>
+      </td>
+      <td class="summary-rate">
+        <div class="summary-rate-value ${profitClass}">
+          평균 ${profitSymbol}${avgProfitRate.toFixed(2)}%
+        </div>
+      </td>
+    `;
+    
+    tbody.appendChild(summaryRow);
+  }
 }
 
 // 초기화

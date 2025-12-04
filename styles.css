@@ -847,6 +847,11 @@ body {
   text-align: right !important;
 }
 
+.col-quantity {
+  width: 80px;
+  text-align: center !important;
+}
+
 .col-strategy-type {
   width: 120px;
   text-align: center !important;
@@ -875,6 +880,12 @@ body {
 }
 
 .strategy-price {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.strategy-quantity {
   font-size: 15px;
   font-weight: 600;
   color: #1a1a1a;
@@ -949,6 +960,72 @@ body {
 .strategy-status.status-completed {
   background-color: #dcfce7;
   color: #22c55e;
+}
+
+/* 전략 현황 요약 행 */
+.strategy-summary-row {
+  background-color: #f8f9fa;
+  border-top: 2px solid #e0e0e0 !important;
+  font-weight: 600;
+}
+
+.strategy-summary-row td {
+  padding: 16px 8px !important;
+  border-bottom: none !important;
+}
+
+.summary-label {
+  text-align: left !important;
+}
+
+.summary-text {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.summary-count {
+  text-align: center !important;
+}
+
+.summary-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.summary-profit {
+  text-align: right !important;
+}
+
+.summary-profit-value {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.summary-profit-value.positive {
+  color: #ef4444;
+}
+
+.summary-profit-value.negative {
+  color: #3b82f6;
+}
+
+.summary-rate {
+  text-align: center !important;
+}
+
+.summary-rate-value {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.summary-rate-value.positive {
+  color: #ef4444;
+}
+
+.summary-rate-value.negative {
+  color: #3b82f6;
 }
 
 /* 인기 종목 그리드 */
