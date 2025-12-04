@@ -953,6 +953,11 @@ body {
   color: #3b82f6;
 }
 
+.strategy-status.status-buy-done {
+  background-color: #e0e7ff;
+  color: #6366f1;
+}
+
 .strategy-status.status-selling {
   background-color: #fef3c7;
   color: #f59e0b;

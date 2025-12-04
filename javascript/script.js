@@ -573,31 +573,34 @@ async function renderStrategyTable() {
     // 진행 상황 텍스트 및 클래스
     let statusText = item.status || '-';
     let statusClass = '';
-    let isCompleted = false;
+    let isSellDone = false;
     
-    // 상태를 한국어로 변환
-    if (statusText.includes('BUY')) {
-      statusText = '매수중';
-      statusClass = 'status-buying';
-    } else if (statusText.includes('SELL')) {
-      if (statusText.includes('PENDING')) {
-        statusText = '매도 대기중';
-      } else if (statusText.includes('DONE')) {
-        statusText = '거래 완료';
-        statusClass = 'status-completed';
-        isCompleted = true;
-      } else {
+    // API 상태를 한국어로 정확히 매핑
+    switch (statusText) {
+      case 'BUY_PENDING':
+        statusText = '매수중';
+        statusClass = 'status-buying';
+        break;
+      case 'BUY_DONE':
+        statusText = '매수 완료';
+        statusClass = 'status-buy-done';
+        break;
+      case 'SELL_PENDING':
         statusText = '매도중';
-      }
-      statusClass = statusClass || 'status-selling';
-    } else if (statusText.includes('COMPLETED') || statusText.includes('완료')) {
-      statusText = '거래 완료';
-      statusClass = 'status-completed';
-      isCompleted = true;
+        statusClass = 'status-selling';
+        break;
+      case 'SELL_DONE':
+        statusText = '매도 완료';
+        statusClass = 'status-completed';
+        isSellDone = true;
+        break;
+      default:
+        statusText = item.status || '-';
+        statusClass = '';
     }
 
-    // 완료된 거래의 수익률 계산
-    if (isCompleted && buyPrice != null && sellPrice != null && buyPrice !== 0) {
+    // SELL_DONE 상태의 거래만 수익률 계산
+    if (isSellDone && buyPrice != null && sellPrice != null && buyPrice !== 0) {
       const quantity = item.quantity || 1;
       const profit = (sellPrice - buyPrice) * quantity;
       const profitRate = ((sellPrice - buyPrice) / buyPrice) * 100;
@@ -642,7 +645,7 @@ async function renderStrategyTable() {
     tbody.appendChild(row);
   });
 
-  // 완료된 거래가 있으면 요약 행 추가
+  // SELL_DONE 거래가 있으면 요약 행 추가
   if (completedTrades > 0) {
     const avgProfitRate = totalProfitRate / completedTrades;
     const profitClass = totalProfit >= 0 ? 'positive' : 'negative';
@@ -651,11 +654,8 @@ async function renderStrategyTable() {
     const summaryRow = document.createElement('tr');
     summaryRow.className = 'strategy-summary-row';
     summaryRow.innerHTML = `
-      <td colspan="3" class="summary-label">
-        <div class="summary-text">완료된 거래 수익 현황</div>
-      </td>
-      <td class="summary-count">
-        <div class="summary-value">${completedTrades}건</div>
+      <td colspan="4" class="summary-label">
+        <div class="summary-text">매도 완료 수익 현황 (${completedTrades}건)</div>
       </td>
       <td colspan="2" class="summary-profit">
         <div class="summary-profit-value ${profitClass}">
