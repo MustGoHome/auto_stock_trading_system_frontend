@@ -626,11 +626,49 @@ body {
   margin-bottom: 16px;
   padding-bottom: 12px;
   border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .update-time {
   font-size: 13px;
   color: #999;
+}
+
+.refresh-btn {
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.refresh-btn:hover {
+  background-color: #f5f6fa;
+  color: #3182f6;
+}
+
+.refresh-btn:active {
+  transform: scale(0.95);
+}
+
+.refresh-btn.rotating svg {
+  animation: rotate 0.5s ease-in-out;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .stocks-table {

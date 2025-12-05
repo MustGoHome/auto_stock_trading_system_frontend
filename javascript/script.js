@@ -709,6 +709,30 @@ async function init() {
 
   // 전략 주문 폼 이벤트
   initOrderForm();
+
+  // 새로고침 버튼 이벤트
+  const refreshStocksBtn = document.getElementById('refreshStocksBtn');
+  const refreshStrategyBtn = document.getElementById('refreshStrategyBtn');
+
+  if (refreshStocksBtn) {
+    refreshStocksBtn.addEventListener('click', async () => {
+      refreshStocksBtn.classList.add('rotating');
+      await renderStocksTable();
+      setTimeout(() => {
+        refreshStocksBtn.classList.remove('rotating');
+      }, 500);
+    });
+  }
+
+  if (refreshStrategyBtn) {
+    refreshStrategyBtn.addEventListener('click', async () => {
+      refreshStrategyBtn.classList.add('rotating');
+      await renderStrategyTable();
+      setTimeout(() => {
+        refreshStrategyBtn.classList.remove('rotating');
+      }, 500);
+    });
+  }
 }
 
 // 전략 주문 폼 초기화
