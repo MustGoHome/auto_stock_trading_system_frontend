@@ -283,6 +283,16 @@ async function fetchStockData(code, stockName = '') {
 // 주식 테이블 렌더링
 async function renderStocksTable() {
   const tbody = document.getElementById('stocksTableBody');
+  const tableWrapper = document.querySelector('.stocks-table-wrapper');
+  
+  // 로딩 상태 표시
+  if (tableWrapper) {
+    tableWrapper.classList.add('table-loading');
+  }
+  
+  // 기존 데이터 저장 (애니메이션 비교용)
+  const oldData = [...stocksTableData];
+  
   tbody.innerHTML = '';
 
   // 1단계: Top 10 종목 리스트 먼저 가져오기
@@ -448,6 +458,32 @@ async function renderStocksTable() {
       row.style.display = '';
     });
   }
+
+  // 로딩 상태 제거
+  if (tableWrapper) {
+    tableWrapper.classList.remove('table-loading');
+  }
+
+  // 업데이트된 행에 애니메이션 적용
+  rows.forEach((row, index) => {
+    setTimeout(() => {
+      row.classList.add('row-updated');
+      
+      // 값이 변경된 셀 강조
+      const priceCell = row.querySelector('.stock-price-value');
+      const changeCell = row.querySelector('.stock-change-value');
+      
+      if (priceCell) priceCell.classList.add('value-updated');
+      if (changeCell) changeCell.classList.add('value-updated');
+      
+      // 애니메이션 클래스 제거 (재사용을 위해)
+      setTimeout(() => {
+        row.classList.remove('row-updated');
+        if (priceCell) priceCell.classList.remove('value-updated');
+        if (changeCell) changeCell.classList.remove('value-updated');
+      }, 800);
+    }, index * 50); // 순차적 애니메이션
+  });
 }
 
 // 필터 변경
@@ -505,6 +541,13 @@ async function fetchStrategyData() {
 // 전략 현황 테이블 렌더링
 async function renderStrategyTable() {
   const tbody = document.getElementById('strategyTableBody');
+  const tableWrapper = document.querySelector('.strategy-table-wrapper');
+  
+  // 로딩 상태 표시
+  if (tableWrapper) {
+    tableWrapper.classList.add('table-loading');
+  }
+  
   tbody.innerHTML = '';
 
   // API에서 데이터 가져오기
@@ -678,6 +721,36 @@ async function renderStrategyTable() {
     
     tbody.appendChild(summaryRow);
   }
+
+  // 로딩 상태 제거
+  if (tableWrapper) {
+    tableWrapper.classList.remove('table-loading');
+  }
+
+  // 업데이트된 행에 애니메이션 적용
+  const rows = Array.from(tbody.querySelectorAll('tr:not(.strategy-summary-row)'));
+  rows.forEach((row, index) => {
+    setTimeout(() => {
+      row.classList.add('row-updated');
+      
+      // 값이 변경된 셀 강조
+      const priceCell = row.querySelector('.strategy-price');
+      const gapCell = row.querySelector('.strategy-gap');
+      const statusCell = row.querySelector('.strategy-status');
+      
+      if (priceCell) priceCell.classList.add('value-updated');
+      if (gapCell) gapCell.classList.add('value-updated');
+      if (statusCell) statusCell.classList.add('value-updated');
+      
+      // 애니메이션 클래스 제거 (재사용을 위해)
+      setTimeout(() => {
+        row.classList.remove('row-updated');
+        if (priceCell) priceCell.classList.remove('value-updated');
+        if (gapCell) gapCell.classList.remove('value-updated');
+        if (statusCell) statusCell.classList.remove('value-updated');
+      }, 800);
+    }, index * 50); // 순차적 애니메이션
+  });
 }
 
 // 초기화
@@ -716,21 +789,41 @@ async function init() {
 
   if (refreshStocksBtn) {
     refreshStocksBtn.addEventListener('click', async () => {
+      // 버튼 비활성화 및 회전 애니메이션 시작
       refreshStocksBtn.classList.add('rotating');
-      await renderStocksTable();
-      setTimeout(() => {
-        refreshStocksBtn.classList.remove('rotating');
-      }, 500);
+      refreshStocksBtn.disabled = true;
+      
+      try {
+        await renderStocksTable();
+      } catch (error) {
+        console.error('[ERROR] Failed to refresh stocks table:', error);
+      } finally {
+        // 최소 600ms 후 버튼 활성화 (애니메이션 완료 보장)
+        setTimeout(() => {
+          refreshStocksBtn.classList.remove('rotating');
+          refreshStocksBtn.disabled = false;
+        }, 600);
+      }
     });
   }
 
   if (refreshStrategyBtn) {
     refreshStrategyBtn.addEventListener('click', async () => {
+      // 버튼 비활성화 및 회전 애니메이션 시작
       refreshStrategyBtn.classList.add('rotating');
-      await renderStrategyTable();
-      setTimeout(() => {
-        refreshStrategyBtn.classList.remove('rotating');
-      }, 500);
+      refreshStrategyBtn.disabled = true;
+      
+      try {
+        await renderStrategyTable();
+      } catch (error) {
+        console.error('[ERROR] Failed to refresh strategy table:', error);
+      } finally {
+        // 최소 600ms 후 버튼 활성화 (애니메이션 완료 보장)
+        setTimeout(() => {
+          refreshStrategyBtn.classList.remove('rotating');
+          refreshStrategyBtn.disabled = false;
+        }, 600);
+      }
     });
   }
 }
